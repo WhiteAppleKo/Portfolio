@@ -1,3 +1,2 @@
 # Ignore Tool-specific untracked files
-IgnoreTool/node_modules/
-IgnoreTool/*.pdf
+IgnoreTool
