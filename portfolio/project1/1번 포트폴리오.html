@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Lab · Technical Specification</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
+  
+  <!-- Highlight.js GitHub Dark CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/highlight.min.js"></script>
+  <script>hljs.highlightAll();</script>
+
+  <style>
+    :root {
+      --bg-dark: #FFFFFF;
+      --card-bg: #FFFFFF;
+      --card-border: #E5E7EB;
+      --text-main: #222222;
+      --text-muted: #4B5563;
+      --primary: #2563EB; /* Blue */
+      --primary-glow: rgba(37, 99, 235, 0.05);
+      --secondary: #4F46E5;
+      --accent: #D97706;
+      --font-outfit: 'Outfit', 'Noto Sans KR', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image: radial-gradient(circle at 50% 0%, var(--primary-glow) 0%, transparent 60%);
+      color: var(--text-main);
+      font-family: var(--font-outfit);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.8;
+      padding: 60px 20px 100px 20px;
+    }
+
+    .wrap {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* ── 헤더 ── */
+    header {
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 30px;
+      margin-bottom: 50px;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 20px;
+      transition: color 0.3s;
+    }
+
+    .back-btn:hover {
+      color: var(--primary);
+    }
+
+    .back-btn svg {
+      margin-right: 8px;
+      transition: transform 0.3s;
+    }
+
+    .back-btn:hover svg {
+      transform: translateX(-4px);
+    }
+
+    .project-category {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--primary);
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-size: 2.8rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #111827 30%, var(--primary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 16px;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-top: 24px;
+    }
+
+    .meta-item {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04);
+    }
+
+    .meta-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+
+    .meta-val {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    /* ── 본문 콘텐츠 ── */
+    section {
+      margin-bottom: 60px;
+    }
+
+    h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-top: 40px;
+      margin-bottom: 20px;
+      border-left: 4px solid var(--primary);
+      padding-left: 14px;
+      color: #111827;
+    }
+
+    h3 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-top: 24px;
+      margin-bottom: 10px;
+      color: #111827;
+    }
+
+    p {
+      color: var(--text-muted);
+      font-weight: 400;
+      margin-bottom: 16px;
+    }
+
+    strong {
+      color: var(--primary);
+    }
+
+    ul {
+      margin-bottom: 20px;
+      padding-left: 20px;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    li {
+      margin-bottom: 6px;
+    }
+
+    /* 코드 블록 스타일 */
+    pre {
+      background: #F9FAFB;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 18px;
+      margin: 20px 0;
+      overflow-x: auto;
+    }
+
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: #1F2937;
+    }
+
+    /* 텍스트 내 단일 코드 */
+    p code {
+      background: rgba(37, 99, 235, 0.05);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--primary);
+    }
+
+    blockquote {
+      background: rgba(37, 99, 235, 0.05);
+      border-left: 4px solid var(--primary);
+      border-radius: 0 12px 12px 0;
+      padding: 16px 20px;
+      margin: 24px 0;
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    blockquote p {
+      margin-bottom: 0;
+      color: var(--primary);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="wrap">
+    
+    <header>
+      <a href="../viewer.html#1" class="back-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        문서 뷰어로 돌아가기
+      </a>
+      <div class="project-category">3D Portfolio · Project #01</div>
+      <h1>Portal Lab 기술 사양서</h1>
+      
+      <div class="meta-grid">
+        <div class="meta-item">
+          <div class="meta-label">제작 인원</div>
+          <div class="meta-val">1인 (개인 프로젝트)</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">개발 기간</div>
+          <div class="meta-val">2025.04.13 - 2025.04.30 (18일)</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">핵심 스택</div>
+          <div class="meta-val">Unity / C# / Matrix4x4 / Shader / IK</div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      
+      <section>
+        <h2>1. Player System (Inverse Kinematics)</h2>
+        <p>포탈 통과 시 및 3인칭 렌더링 상황에서 마우스 조준 방향에 맞춰 플레이어 캐릭터의 상체 회전과 조준 자세가 물리에 기반하여 자연스럽게 정렬되도록 역운동학(IK) 보정 시스템을 구축했습니다.</p>
+        <ul>
+          <li><strong>AimController</strong>: 마우스 스크린 포인터의 변화량을 수신하여 월드 축 상의 가상의 표적(aimTarget) 좌표를 갱신합니다.</li>
+          <li><strong>AimIK</strong>: 유니티 뼈대 구조 내에서 스파인(Spine) 및 어깨, 목 관절 등 상체 골격 회전 벡터에 보간 가중치를 대입하여 정교하게 제어합니다.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>2. 내적(Dot Product) 기반 텔레포트 판정</h2>
+        <p>기존 충돌 트리거 판정은 순간이동 진입 시 충돌 타이밍과 속도 편차로 인해 화면이 툭툭 끊기는 현상을 보였습니다. 이를 개선하고자 플레이어 오프셋 벡터와 게이트 면의 <strong>법선 벡터(transform.forward) 간의 내적 계산 부호</strong>가 프레임 사이에 반전되는 지점을 공간 관통 찰나로 연산하도록 설계했습니다.</p>
+        <pre><code class="language-csharp">Vector3 offsetFromPortal = travelerT.position - transform.position;
+int portalSide = System.Math.Sign(Vector3.Dot(offsetFromPortal, transform.forward));
+int portalSideOld = System.Math.Sign(Vector3.Dot(traveler.previousOffsetFromPortal, transform.forward));
+
+// 내적값 부호의 전후 프레임 비교를 통한 경계선 관통 시점 판정
+if (portalSide != portalSideOld)
+{
+    traveler.Teleport(transform, linkedPortal.transform, m.GetColumn(3), m.rotation);
+}</code></pre>
+        <blockquote>
+          <strong>의존성 결합 해제 성과</strong><br>
+          기존 구조에서는 플레이어 컨트롤러 스크립트 내부에서 순간이동 코드가 종속되어 있었습니다. 이를 공통 추상 구조인 <code>PortalTraveler</code> 컴포넌트로 분리 정립함으로써 상자, 물리 큐브, 투사체 등 리지드바디를 탑재한 월드 상의 모든 객체가 공통 통과하도록 확장성을 보증했습니다.
+        </blockquote>
+      </section>
+
+      <section>
+        <h2>3. Matrix4x4 거울 반사 시점 매핑</h2>
+        <p>포탈 게이트 내부 너머로 비치는 환경은 월드에 존재하는 가상 카메라가 실시간 텍스처 투사 렌더링을 가동한 결과물입니다. 입출구 포탈이 서로 비스듬하게 어긋나 있거나 회전되어 배치되더라도 일관된 플레이어 시점을 유지하기 위해, 행렬 공간 변환 계산식을 도출했습니다.</p>
+        <pre><code class="language-csharp">// 플레이어 카메라 행렬 획득
+Matrix4x4 localToWorldMatrix = playerCam.transform.localToWorldMatrix;
+
+// 상대 포탈의 월드To로컬 변환 후, 이 포탈의 로컬To월드로 반사 연산 처리
+localToWorldMatrix = transform.localToWorldMatrix * linkedPortal.transform.worldToLocalMatrix * localToWorldMatrix;
+
+// 동기화할 가상 카메라 트랜스폼에 즉시 대입
+portalCam.transform.SetPositionAndRotation(
+    localToWorldMatrix.GetColumn(3), 
+    localToWorldMatrix.rotation
+);</code></pre>
+      </section>
+
+      <section>
+        <h2>4. 렌더링 최적화 및 Frustum Culling</h2>
+        <p>포탈 렌더링은 실시간으로 추가적인 뷰 렌더링을 수행하기 때문에 극심한 CPU/GPU 드로우콜 증가를 동반합니다. 불필요한 그리기 작업을 막기 위해 시야각 선별 최적화 필터를 도입했습니다.</p>
+        <ul>
+          <li><strong>Frustum Culling</strong>: GeometryUtility API를 접목하여 포탈 면적 Bounding Box가 현재 플레이어 카메라 시야 추대 평면(Frustum Planes) 6개 내부에 위치하는지 교차 분석합니다. 시야각 바깥에 있는 포탈은 드로우콜 호출을 원천 스킵합니다.</li>
+          <li><strong>Recursion Limits</strong>: 마주보는 포탈 배치에서 카메라 렌더링이 재귀 연쇄 호출되어 프레임이 깨지는 것을 방어하기 위해 최대 2~3회로 재귀 깊이를 한계화하는 차단 알고리즘을 빌드했습니다.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>5. 그래픽 클론 및 단면 픽셀 셰이더</h2>
+        <p>물체가 포탈 경계를 넘어가는 동안 절반은 이쪽 포탈에, 나머지 절반은 저쪽 포탈에 온전히 묘사되어야 공간 연속성을 완성할 수 있습니다. 이를 위해 <strong>GraphicsClone(실시간 외형 복제체)</strong> 및 <strong>Pixel Discard Shader(평면 클리핑 셰이더)</strong>를 설계했습니다.</p>
+        <pre><code class="language-hlsl">// 픽셀 셰이더 영역: 포탈 평면 뒷면의 픽셀은 드로잉 단계에서 Discard 처리
+half4 frag(Varyings i) : SV_Target
+{
+    float3 adjustedCentre = sliceCentre + sliceNormal * sliceOffsetDst;
+    float3 offsetToSliceCentre = adjustedCentre - i.worldPos;
+
+    // clip 내장함수: 인자값이 음수이면 픽셀 연산을 즉시 폐기하고 그리지 않음
+    clip(dot(offsetToSliceCentre, sliceNormal));
+
+    half4 c = tex2D(_MainText, i.uv) * _Color;
+    return c;
+}</code></pre>
+      </section>
+
+      <section>
+        <h2>6. 운동 보존 및 한계 검토</h2>
+        <p>포탈을 빠져나가는 텔레포트 도중에도 속력과 낙하 가속도(방향/크기)가 온전히 유지되어야 모멘텀 운동 효과가 극대화됩니다. 트래블러 오브젝트가 탈출할 때 linkedPortal의 회전 벡터를 기준으로 속도 방향을 전환시켰습니다.</p>
+        <pre><code class="language-csharp">// PortalTraveler.cs 내부 속도 및 회전 동기화
+public virtual void Teleport(Transform fromPortal, Transform toPortal, Vector3 pos, Quaternion rot)
+{
+    transform.position = pos;
+    transform.rotation = rot;
+    
+    if (rb != null)
+    {
+        // 로컬 방향 벡터 전환 곱연산을 통해 물리 속도 유지 전달
+        rb.velocity = toPortal.TransformDirection(fromPortal.InverseTransformDirection(rb.velocity));
+    }
+}</code></pre>
+        <blockquote>
+          <strong>터널링(Tunneling) 한계점 회고</strong><br>
+          고속 낙하로 인해 중력 속도 임계치를 넘는 프레임의 경우, 한 프레임당 통과 거리가 포탈 게이트의 트리거 충돌 두께를 지나쳐 관동을 스킵하고 바닥 벽면에 박히는 터널링이 일부 감지되었습니다. 추후 Continuous 탐색 모드 연동 및 레이캐스트 소인(Sweeping) 충돌 동적 판정 로직을 덧대어 개선할 예정입니다.
+        </blockquote>
+      </section>
+
+    </main>
+
+  </div>
+
+</body>
+</html>

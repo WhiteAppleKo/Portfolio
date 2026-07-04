@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game Client Developer Portfolio Hub</title>
+  <meta name="description" content="유니티 게임 클라이언트 개발자 포트폴리오 웹 허브입니다. 핵심 프로젝트 설계와 아키텍처 문서를 제공합니다.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
+  
+  <style>
+    /* ── 디자인 토큰 & 초기화 ── */
+    :root {
+      --bg-dark: #FFFFFF;
+      --card-bg: #FFFFFF;
+      --card-border: #E5E7EB;
+      --text-main: #222222;
+      --text-muted: #4B5563;
+      --primary: #2563EB; /* Blue */
+      --primary-glow: rgba(37, 99, 235, 0.05);
+      --secondary: #4F46E5; /* Indigo */
+      --accent: #D97706; /* Amber */
+      --font-outfit: 'Outfit', 'Noto Sans KR', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-outfit);
+      -webkit-font-smoothing: antialiased;
+      word-break: keep-all;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image: radial-gradient(circle at 50% 0%, var(--primary-glow) 0%, transparent 60%);
+      background-attachment: fixed;
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.6;
+    }
+
+    /* ── 헤더 레이아웃 ── */
+    header {
+      max-width: 1100px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 80px 24px 40px 24px;
+      text-align: center;
+      animation: fadeInDown 0.8s ease-out;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 14px;
+      background: rgba(37, 99, 235, 0.06);
+      border: 1px solid rgba(37, 99, 235, 0.15);
+      border-radius: 9999px;
+      color: var(--primary);
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 3rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #111827 30%, var(--primary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 16px;
+    }
+
+    .subtitle {
+      font-size: 1.2rem;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto 32px auto;
+      font-weight: 300;
+    }
+
+    /* ── 프로필 간략 카드 (Glassmorphism) ── */
+    .profile-summary {
+      max-width: 700px;
+      margin: 0 auto 60px auto;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 30px;
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      gap: 20px;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.06);
+      animation: fadeInUp 0.8s ease-out;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .profile-summary:hover {
+      transform: translateY(-4px);
+      border-color: rgba(99, 102, 241, 0.45);
+      box-shadow: 0 15px 30px -10px rgba(99, 102, 241, 0.3);
+    }
+
+    .profile-item {
+      text-align: center;
+    }
+
+    .profile-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+      margin-bottom: 4px;
+    }
+
+    .profile-value {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    /* ── 메인 컨텐츠 (그리드) ── */
+    main {
+      max-width: 1100px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 0 24px 80px 24px;
+      flex: 1;
+      animation: fadeInUp 1s ease-out;
+    }
+
+    .grid-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 24px;
+      padding-left: 10px;
+      border-left: 4px solid var(--primary);
+    }
+
+    .portfolio-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 24px;
+    }
+
+    /* ── 포트폴리오 카드 컴포넌트 ── */
+    .portfolio-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      text-decoration: none;
+      color: var(--text-main);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+    }
+
+    /* 카드 네온 테두리 효과 */
+    .portfolio-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .portfolio-card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(37, 99, 235, 0.3);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+    }
+
+    .portfolio-card:hover::before {
+      opacity: 1;
+    }
+
+    .card-num {
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      color: var(--primary);
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .card-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      line-height: 1.3;
+    }
+
+    .card-desc {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      flex: 1;
+      font-weight: 400;
+    }
+
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 20px;
+    }
+
+    .card-tag {
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      background: rgba(37, 99, 235, 0.05);
+      border: 1px solid rgba(37, 99, 235, 0.1);
+      border-radius: 6px;
+      color: var(--text-muted);
+    }
+
+    .card-link-btn {
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--primary);
+      transition: color 0.3s;
+    }
+
+    .portfolio-card:hover .card-link-btn {
+      color: #3B82F6;
+    }
+
+    .card-link-btn svg {
+      margin-left: 6px;
+      transition: transform 0.3s;
+    }
+
+    .portfolio-card:hover .card-link-btn svg {
+      transform: translateX(4px);
+    }
+
+    /* ── 푸터 ── */
+    footer {
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 40px 24px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    /* ── 애니메이션 ── */
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .resume-btn {
+      display: inline-flex;
+      align-items: center;
+      padding: 10px 24px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 30px;
+      color: #FFF;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      box-shadow: 0 4px 15px var(--primary-glow);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      margin-top: 20px;
+    }
+
+    .resume-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* ── 반응형 레이아웃 ── */
+    @media (max-width: 768px) {
+      header {
+        padding: 50px 24px 30px 24px;
+      }
+      h1 {
+        font-size: 2.2rem;
+      }
+      .profile-summary {
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="badge">Unity Game Client Developer</div>
+    <h1 id="main-header-title">Technical Portfolio Hub</h1>
+    <p class="subtitle">객체지향 설계 원칙(SOLID)과 확장성을 지향하는 게임 개발자 포트폴리오 아카이브</p>
+    
+    <a href="resume/resume_viewer.html" class="profile-summary" id="profile-card">
+      <div class="profile-item">
+        <div class="profile-label">Developer</div>
+        <div class="profile-value">김우태</div>
+      </div>
+      <div class="profile-item">
+        <div class="profile-label">Contact</div>
+        <div class="profile-value">rladnxo3577@naver.com</div>
+      </div>
+      <div class="profile-item">
+        <div class="profile-label">Tech Stack</div>
+        <div class="profile-value">Unity / C# / Network / VR</div>
+      </div>
+    </a>
+
+    <a href="resume/resume_viewer.html" class="resume-btn" id="btn-view-resume">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:8px;">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+        <polyline points="14 2 14 8 20 8"></polyline>
+        <line x1="16" y1="13" x2="8" y2="13"></line>
+        <line x1="16" y1="17" x2="8" y2="17"></line>
+        <polyline points="10 9 9 9 8 9"></polyline>
+      </svg>
+      상세 이력서 보기
+    </a>
+  </header>
+
+  <main>
+    <h2 class="grid-title" id="grid-header">Projects</h2>
+    
+    <div class="portfolio-grid" id="project-list-grid">
+      <!-- 1번 포트폴리오 -->
+      <a href="viewer.html#1" class="portfolio-card" id="card-proj-1">
+        <div class="card-num">PROJECT #01</div>
+        <h3 class="card-title">확률 기반 크래프팅 시스템</h3>
+        <p class="card-desc">UI와 비즈니스 로직을 완벽히 분리하고, 주입형 난수 함수로 100% 경로 단위 테스트를 보장하는 제작 시스템 설계.</p>
+        <div class="card-tags">
+          <span class="card-tag">DIP/Event</span>
+          <span class="card-tag">Unit Test</span>
+          <span class="card-tag">LINQ</span>
+        </div>
+        <div class="card-link-btn">
+          상세 기술 문서 보기
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </a>
+
+      <!-- 2번 포트폴리오 -->
+      <a href="viewer.html#2" class="portfolio-card" id="card-proj-2">
+        <div class="card-num">PROJECT #02</div>
+        <h3 class="card-title">[프로젝트 2 상세 작성]</h3>
+        <p class="card-desc">이곳에 두 번째 대표 프로젝트의 핵심 아키텍처 성과 및 최적화 기획 요약을 작성해 넣으세요.</p>
+        <div class="card-tags">
+          <span class="card-tag">대기 중</span>
+          <span class="card-tag">대기 중</span>
+        </div>
+        <div class="card-link-btn">
+          상세 기술 문서 보기
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </a>
+
+      <!-- 3번 포트폴리오 -->
+      <a href="viewer.html#3" class="portfolio-card" id="card-proj-3">
+        <div class="card-num">PROJECT #03</div>
+        <h3 class="card-title">[프로젝트 3 상세 작성]</h3>
+        <p class="card-desc">세 번째 프로젝트의 구조도, 트러블슈팅 및 성능 향상 핵심 지표를 채워넣을 템플릿 영역입니다.</p>
+        <div class="card-tags">
+          <span class="card-tag">대기 중</span>
+          <span class="card-tag">대기 중</span>
+        </div>
+        <div class="card-link-btn">
+          상세 기술 문서 보기
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </a>
+
+      <!-- 4번 포트폴리오 -->
+      <a href="viewer.html#4" class="portfolio-card" id="card-proj-4">
+        <div class="card-num">PROJECT #04</div>
+        <h3 class="card-title">[프로젝트 4 상세 작성]</h3>
+        <p class="card-desc">네 번째 프로젝트의 시스템 구조 및 모듈 결합도를 제어하기 위해 고민한 설계 결정을 기록하는 공간입니다.</p>
+        <div class="card-tags">
+          <span class="card-tag">대기 중</span>
+          <span class="card-tag">대기 중</span>
+        </div>
+        <div class="card-link-btn">
+          상세 기술 문서 보기
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </a>
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2026 Game Client Developer Portfolio. Powered by Github Pages.</p>
+  </footer>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const projects = [1, 2, 3, 4];
+      
+      projects.forEach(num => {
+        const card = document.getElementById(`card-proj-${num}`);
+        if (!card) return;
+
+        const titleEl = card.querySelector(".card-title");
+        const descEl = card.querySelector(".card-desc");
+        const tagsEl = card.querySelector(".card-tags");
+
+        // 프로젝트 마크다운 동적 읽기
+        fetch(`./portfolio/project${num}/README.md`)
+          .then(res => {
+            if (!res.ok) throw new Error("Readme not found");
+            return res.text();
+          })
+          .then(mdText => {
+            parseAndApply(mdText, titleEl, descEl, tagsEl);
+          })
+          .catch(err => {
+            console.log(`Project ${num} metadata skipped (Using placeholder):`, err.message);
+          });
+      });
+
+      function parseAndApply(md, titleEl, descEl, tagsEl) {
+        const lines = md.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+        
+        let title = "";
+        let desc = "";
+        let tags = [];
+
+        // 1. 제목 추출 (# 헤더)
+        for (let line of lines) {
+          if (line.startsWith("#")) {
+            title = line.replace(/^#+\s*/, "").replace(/—/g, "-");
+            break;
+          }
+        }
+
+        // 2. 한 줄 요약 설명 추출
+        let foundHeader = false;
+        for (let line of lines) {
+          if (line.startsWith("#")) {
+            foundHeader = true;
+            continue;
+          }
+          if (foundHeader && !line.startsWith("#") && !line.startsWith("*") && !line.startsWith("-") && !line.startsWith(">") && !line.startsWith("`")) {
+            desc = line;
+            break;
+          }
+        }
+
+        // 3. 태그 추출 (**로 강조된 메타 라인 파싱)
+        for (let line of lines) {
+          if (line.startsWith("**") && line.endsWith("**")) {
+            const rawTags = line.replace(/^\*\*|\*\*$/g, "").split(/[·•|]/);
+            tags = rawTags.map(t => t.trim()).filter(t => t.length > 0);
+            break;
+          }
+        }
+
+        // DOM 업데이트
+        if (title && titleEl) titleEl.textContent = title;
+        if (desc && descEl) {
+          descEl.textContent = desc.length > 85 ? desc.substring(0, 85) + "..." : desc;
+        }
+        if (tags.length > 0 && tagsEl) {
+          tagsEl.innerHTML = "";
+          // 최대 3개 태그 노출
+          tags.slice(0, 3).forEach(tag => {
+            const span = document.createElement("span");
+            span.className = "card-tag";
+            span.textContent = tag;
+            tagsEl.appendChild(span);
+          });
+        }
+      }
+    });
+  </script>
+
+</body>
+</html>

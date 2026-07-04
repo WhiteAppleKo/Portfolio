@@ -1,0 +1,166 @@
+@charset "UTF-8";
+
+/* ==========================================================================
+   김우태 개발자 포트폴리오 웹 허브 — 공통 디자인 시스템 (theme.css)
+   [미니멀 / 문서형 테마 (가장 권장)]
+   ========================================================================== */
+
+:root {
+  /* ── 폰트 2종 (본문용 산세리프 / 코드용 고정폭) ── */
+  --font-sans: 'Outfit', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'D2Coding', Consolas, monospace;
+
+  /* ── 테마 3색 (미니멀/문서형 밝은 테마) ── */
+  --bg-light: #FFFFFF;        /* 1. 배경색 (순백색) */
+  --text-main: #222222;       /* 2. 텍스트색 (진회색) */
+  --primary: #2563EB;         /* 3. 강조색 (신뢰성 높은 파란색 Blue) */
+  
+  /* ── 서브 강조 및 상태 컬러 ── */
+  --secondary: #4F46E5;       /* 페리윙클/인디고 계열 */
+  --text-muted: #4B5563;      /* 흐린 설명용 그레이 */
+  --accent: #D97706;          /* 포인트 오렌지/앰버 */
+  
+  /* ── 미니멀 보더 & 섀도우 토큰 ── */
+  --card-bg: #FFFFFF;
+  --card-border: #E5E7EB;     /* 연한 회색 경계선 */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+}
+
+/* ── Reset & Base Styles ── */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-light);
+  background-image: radial-gradient(circle at 50% 0%, rgba(37, 99, 235, 0.02) 0%, transparent 60%);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  line-height: 1.8;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── 레이아웃 컨테이너 ── */
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+/* ── 미니멀 디자인 카드 (.card-wrapper) ── */
+.card-wrapper {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: var(--shadow-md);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-wrapper:hover {
+  transform: translateY(-2px);
+  border-color: rgba(37, 99, 235, 0.3);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ── 헤더 및 텍스트 위계 (Typography) ── */
+h1, h2, h3, h4 {
+  color: #111827;             /* 완전 검정에 가까운 다크 그레이 */
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  font-size: 2.5rem;
+  line-height: 1.2;
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, #111827 30%, var(--primary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+h2 {
+  font-size: 1.5rem;
+  border-left: 4px solid var(--primary);
+  padding-left: 12px;
+  margin: 40px 0 20px 0;
+}
+
+h3 {
+  font-size: 1.15rem;
+  margin: 24px 0 12px 0;
+}
+
+p {
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-bottom: 16px;
+}
+
+strong {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* ── 미니멀 코드 블록 및 인라인 코드 ── */
+pre {
+  background: #F9FAFB;        /* 코드 블록용 연회색 배경 */
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin: 20px 0;
+  overflow-x: auto;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: #1F2937;
+}
+
+p code {
+  background: rgba(37, 99, 235, 0.05);
+  color: var(--primary);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* ── 리스트 스타일 ── */
+ul, ol {
+  margin-bottom: 20px;
+  padding-left: 20px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+li {
+  margin-bottom: 8px;
+}
+
+/* ── 테이블 스타일 ── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0;
+  font-size: 0.9rem;
+}
+
+th {
+  background: rgba(37, 99, 235, 0.04);
+  color: var(--primary);
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 2px solid rgba(37, 99, 235, 0.15);
+  font-weight: 600;
+}
+
+td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--card-border);
+  color: var(--text-muted);
+}

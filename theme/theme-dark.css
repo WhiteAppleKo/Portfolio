@@ -1,0 +1,167 @@
+@charset "UTF-8";
+
+/* ==========================================================================
+   김우태 개발자 포트폴리오 웹 허브 — 공통 디자인 시스템 (theme-dark.css)
+   [다크 네온 글래스모피즘 테마]
+   ========================================================================== */
+
+:root {
+  /* ── 폰트 2종 (본문용 산세리프 / 코드용 고정폭) ── */
+  --font-sans: 'Outfit', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'D2Coding', Consolas, monospace;
+
+  /* ── 테마 3색 (다크 네온 글래스모피즘 테마) ── */
+  --bg-dark: #0B0F19;         /* 1. 배경색 (깊은 다크 네이비) */
+  --text-main: #F3F4F6;       /* 2. 텍스트색 (미색 밝은 회색) */
+  --primary: #A855F7;         /* 3. 강조색 (네온 퍼플) */
+  
+  /* ── 서브 강조 및 상태 컬러 ── */
+  --secondary: #6366F1;       /* 네온 인디고 */
+  --text-muted: #9CA3AF;      /* 흐린 설명용 그레이 */
+  --accent: #F59E0B;          /* 경고/포인트 앰버 */
+  
+  /* ── 글래스모피즘 표준 디자인 토큰 ── */
+  --card-bg: rgba(17, 24, 39, 0.7);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --primary-glow: rgba(168, 85, 247, 0.15);
+  --secondary-glow: rgba(99, 102, 241, 0.15);
+}
+
+/* ── Reset & Base Styles ── */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-dark);
+  background-image: radial-gradient(circle at 50% 0%, var(--primary-glow) 0%, transparent 60%);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  line-height: 1.8;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── 레이아웃 컨테이너 ── */
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+/* ── 글래스모피즘 공통 카드 (.card-wrapper) ── */
+.card-wrapper {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 30px;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-wrapper:hover {
+  transform: translateY(-4px);
+  border-color: rgba(168, 85, 247, 0.3);
+  box-shadow: 0 15px 30px -10px rgba(168, 85, 247, 0.25);
+}
+
+/* ── 헤더 및 텍스트 위계 (Typography) ── */
+h1, h2, h3, h4 {
+  color: #FFF;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  font-size: 2.5rem;
+  line-height: 1.2;
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, #FFF 30%, var(--secondary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+h2 {
+  font-size: 1.6rem;
+  border-left: 4px solid var(--primary);
+  padding-left: 12px;
+  margin: 40px 0 20px 0;
+}
+
+h3 {
+  font-size: 1.2rem;
+  margin: 24px 0 12px 0;
+  color: var(--text-main);
+}
+
+p {
+  color: var(--text-muted);
+  font-weight: 300;
+  margin-bottom: 16px;
+}
+
+strong {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* ── 네이티브 코드 블록 및 인라인 코드 ── */
+pre {
+  background: #111827;
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0;
+  overflow-x: auto;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+
+p code {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--primary);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* ── 리스트 스타일 ── */
+ul, ol {
+  margin-bottom: 20px;
+  padding-left: 20px;
+  color: var(--text-muted);
+  font-weight: 300;
+}
+
+li {
+  margin-bottom: 8px;
+}
+
+/* ── 테이블 스타일 ── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0;
+  font-size: 0.9rem;
+}
+
+th {
+  background: rgba(168, 85, 247, 0.08);
+  color: var(--primary);
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 2px solid rgba(168, 85, 247, 0.2);
+  font-weight: 600;
+}
+
+td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--card-border);
+  color: var(--text-muted);
+}

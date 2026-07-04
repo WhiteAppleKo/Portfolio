@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XR Lab · Technical Specification</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
+  
+  <!-- Highlight.js GitHub Dark CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/highlight.min.js"></script>
+  <script>hljs.highlightAll();</script>
+
+  <style>
+    :root {
+      --bg-dark: #FFFFFF;
+      --card-bg: #FFFFFF;
+      --card-border: #E5E7EB;
+      --text-main: #222222;
+      --text-muted: #4B5563;
+      --primary: #2563EB; /* Blue */
+      --primary-glow: rgba(37, 99, 235, 0.05);
+      --secondary: #4F46E5;
+      --accent: #D97706;
+      --font-outfit: 'Outfit', 'Noto Sans KR', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image: radial-gradient(circle at 50% 0%, var(--primary-glow) 0%, transparent 60%);
+      color: var(--text-main);
+      font-family: var(--font-outfit);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.8;
+      padding: 60px 20px 100px 20px;
+    }
+
+    .wrap {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* ── 헤더 ── */
+    header {
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 30px;
+      margin-bottom: 50px;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 20px;
+      transition: color 0.3s;
+    }
+
+    .back-btn:hover {
+      color: var(--primary);
+    }
+
+    .back-btn svg {
+      margin-right: 8px;
+      transition: transform 0.3s;
+    }
+
+    .back-btn:hover svg {
+      transform: translateX(-4px);
+    }
+
+    .project-category {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--primary);
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-size: 2.8rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #111827 30%, var(--primary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 16px;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-top: 24px;
+    }
+
+    .meta-item {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04);
+    }
+
+    .meta-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+
+    .meta-val {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    /* ── 본문 콘텐츠 ── */
+    section {
+      margin-bottom: 60px;
+    }
+
+    h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-top: 40px;
+      margin-bottom: 20px;
+      border-left: 4px solid var(--primary);
+      padding-left: 14px;
+      color: #111727;
+    }
+
+    h3 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-top: 24px;
+      margin-bottom: 10px;
+      color: #111727;
+    }
+
+    p {
+      color: var(--text-muted);
+      font-weight: 400;
+      margin-bottom: 16px;
+    }
+
+    strong {
+      color: var(--primary);
+    }
+
+    ul {
+      margin-bottom: 20px;
+      padding-left: 20px;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    li {
+      margin-bottom: 6px;
+    }
+
+    /* 코드 블록 스타일 */
+    pre {
+      background: #F9FAFB;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 18px;
+      margin: 20px 0;
+      overflow-x: auto;
+    }
+
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: #1F2937;
+    }
+
+    /* 텍스트 내 단일 코드 */
+    p code {
+      background: rgba(37, 99, 235, 0.05);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--primary);
+    }
+
+    blockquote {
+      background: rgba(37, 99, 235, 0.05);
+      border-left: 4px solid var(--primary);
+      border-radius: 0 12px 12px 0;
+      padding: 16px 20px;
+      margin: 24px 0;
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    blockquote p {
+      margin-bottom: 0;
+      color: var(--primary);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="wrap">
+    
+    <header>
+      <a href="../viewer.html#3" class="back-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        문서 뷰어로 돌아가기
+      </a>
+      <div class="project-category">XR Interaction · Project #03</div>
+      <h1>XR Lab 기술 사양서</h1>
+      
+      <div class="meta-grid">
+        <div class="meta-item">
+          <div class="meta-label">제작 인원</div>
+          <div class="meta-val">2인 (팀 프로젝트, 본인 기획/개발 기여)</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">개발 기간</div>
+          <div class="meta-val">2025.06.09 - 2025.06.27 (18일)</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">테스트 기기</div>
+          <div class="meta-val">Meta Quest 3S (실기 빌드 검증 완료)</div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      
+      <section>
+        <h2>1. XR Interaction Toolkit 물리 설계</h2>
+        <p>가상 공간 내 물체와의 상호작용 신뢰성을 제어하기 위해 <strong>Interactor(감지 주체)</strong>, <strong>Interactable(피감지 오브젝트)</strong>, <strong>Interaction Layer(필터링 시스템)</strong> 설계를 표준화했습니다.</p>
+        <ul>
+          <li><strong>Interaction Layer Mask</strong>: 동일한 물리/기능 레이아웃에 소속된 장치들만 결합(잡기, 장착)되도록 1차 필터링 처리하여 가상 현실 조작 오류를 예방했습니다.</li>
+          <li><strong>Interaction Event (Activate)</strong>: 컨트롤러의 트리거 누름을 런타임 이벤트로 감지하여 사격 격발, 스프레이 분사 등의 기믹을 물리 모듈과 비동기식으로 체이닝했습니다.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>2. Lock Grid Socket (커스텀 2중 보안 소켓)</h2>
+        <p>기존 <code>XRSocketInteractor</code>는 레이어 검증만 거치기 때문에, 진열대 칸마다 아무 피규어나 결합되는 한계가 있었습니다. 이를 해결하기 위해 결합 대상 오브젝트의 고유 <strong>식별 키값(Key Data)</strong>을 2차 검증하여 고유 슬롯에만 안전 체결(Snap)되도록 맞춤 상속 확장했습니다.</p>
+        <pre><code class="language-csharp">// XRSocketInteractor 확장 기반의 2중 필터 검증
+public override bool CanSelect(IXRSelectInteractable interactable)
+{
+    // 1. 부모 레이어 마스크 비교 통과 여부 검사
+    bool bBaseCanSelect = base.CanSelect(interactable);
+    if (!bBaseCanSelect) return false;
+
+    // 2. 피규어 컴포넌트의 고유 키 식별 데이터 대조 검증
+    var figureKeyComp = interactable.transform.GetComponent&lt;FigureKeyData&gt;();
+    if (figureKeyComp == null) return false;
+
+    // 3. 소켓 지정값과 피규어 지정 키 코드의 1:1 일치 여부 반환
+    return figureKeyComp.FigureKey == m_requiredSocketKey;
+}</code></pre>
+      </section>
+
+      <section>
+        <h2>3. 사격 상호작용 및 물리 액티베이션</h2>
+        <p>가상 권총 발사 기믹 구현을 위해 물리 레버 조작, 잡기 스태프 제어 및 발사 로직을 리액티브 기반으로 설계했습니다.</p>
+        <ul>
+          <li><strong>레버 물리 연동</strong>: 총기 가방의 손잡이/레버(Lever) 물리 회전 조인트를 잡고 규정 각도 이상 스윙 조작 시, 기믹이 활성화되며 덮개가 개방됩니다.</li>
+          <li><strong>슈팅 기믹 시퀀스</strong>: 총을 쥐는 순간(Select Enter) 씬 내 과녁과 게임 로직이 준비되며, 트리거 입력 시(Activate) 권총 슬라이드 물리 애니메이션, 탄피 배출 물리, 오디오 소스가 일괄 비동기 구동되어 발사됩니다.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>4. 스프레이 페인팅 및 텍스처 UV 맵 매핑</h2>
+        <p>피규어 룸의 실시간 채색 기믹을 구현하기 위해 월드 좌표계 레이캐스트와 2D UV 좌표계를 동적 연산하는 채색 파이프라인을 구축했습니다.</p>
+        <ul>
+          <li><strong>ColorPicker 연동 스폰</strong>: UI 컬러 픽셀 좌표를 파싱해 생성한 스프레이 캔을 인스턴스화할 때, Shader Graph로 짠 Phase 효과가 순차 가동되며 출현합니다.</li>
+          <li><strong>Paint in 3D UV 매핑</strong>: 스프레이 노즐 끝에서 레이케스트를 방출해 피규어 콜라이더와 부딪친 월드 3D 점을 2D UV 텍스처 픽셀 공간으로 실시간 역산 매핑하여 브러시 드로잉 페인트를 정밀 분사 채색합니다.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>5. Dissolve & Phase Shader Graph 제작</h2>
+        <p>XR 프로젝트 컨셉의 비주얼 극대화를 위해 노이즈를 픽셀 단위로 마스킹하여 소멸/생성을 묘사하는 셰이더를 Shader Graph로 구현했습니다.</p>
+        <blockquote>
+          <strong>Phase & Dissolve 렌더 마스킹 Rationale</strong><br>
+          스프레이 스폰 시 사용되는 <strong>Phase 효과</strong>는 스캔 라인을 월드 y축 좌표와 비교하여 라인이 채워지는 시각화를 구축했습니다. 룸 공간이 전환될 때 사용되는 <strong>Dissolve 효과</strong>는 Simplex Noise 맵과 시간 매개변수 값을 픽셀 셰이더의 <code>clip()</code> 연산과 연계하여 픽셀을 순차 기화시키고, 잘려나간 단면에 강한 이미시브 발광 밴드를 둘러 연출했습니다.
+        </blockquote>
+      </section>
+
+    </main>
+
+  </div>
+
+</body>
+</html>

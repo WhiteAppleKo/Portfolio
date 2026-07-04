@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>김우태 · Game Client Developer Portfolio</title>
+  <meta name="description" content="C#, Unity, Git 기반 게임 클라이언트 개발자 김우태의 포트폴리오 상세 명세 페이지입니다.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
+  
+  <!-- 공통 테마 CSS -->
+  <link rel="stylesheet" href="../theme.css">
+  
+  <!-- Markdown Parser Library -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <style>
+    /* ── 디자인 토큰 & 초기화 ── */
+    :root {
+      --bg-dark: #FFFFFF;
+      --card-bg: #FFFFFF;
+      --card-border: #E5E7EB;
+      --text-main: #222222;
+      --text-muted: #4B5563;
+      --primary: #2563EB; /* Blue */
+      --primary-glow: rgba(37, 99, 235, 0.05);
+      --secondary: #4F46E5; /* Indigo */
+      --accent: #D97706; /* Amber */
+      --font-outfit: 'Outfit', 'Noto Sans KR', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image: radial-gradient(circle at 50% 0%, var(--primary-glow) 0%, transparent 60%);
+      background-attachment: fixed;
+      color: var(--text-main);
+      font-family: var(--font-outfit);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.7;
+    }
+
+    /* ── 전체 2열 레이아웃 ── */
+    .portfolio-container {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      min-height: 100vh;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* ── 좌측 컬럼: 프로필 카드 (Sticky) ── */
+    .profile-sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      border-right: 1px solid var(--card-border);
+      padding: 50px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+      background: #F9FAFB;
+    }
+
+    .profile-header {
+      text-align: center;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 20px;
+    }
+
+    /* 홈 복귀 단추 */
+    .back-home-btn {
+      display: inline-flex;
+      align-items: center;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 20px;
+      transition: color 0.3s;
+    }
+
+    .back-home-btn:hover {
+      color: var(--primary);
+    }
+
+    .back-home-btn svg {
+      margin-right: 8px;
+      transition: transform 0.3s;
+    }
+
+    .back-home-btn:hover svg {
+      transform: translateX(-4px);
+    }
+
+    .avatar-placeholder {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      margin: 0 auto 16px auto;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: #FFF;
+      overflow: hidden;
+    }
+
+    .avatar-placeholder img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .profile-name {
+      font-size: 1.75rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      margin-bottom: 6px;
+      color: #111827;
+    }
+
+    .profile-title {
+      font-size: 0.9rem;
+      color: var(--primary);
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── 이력서/자소서 전환 탭 메뉴 ── */
+    .resume-nav-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 24px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      padding: 14px 18px;
+      border-radius: 10px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      background: rgba(0, 0, 0, 0.01);
+      border: 1px solid transparent;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .nav-item:hover {
+      background: rgba(37, 99, 235, 0.05);
+      color: var(--text-main);
+      border-color: rgba(37, 99, 235, 0.15);
+    }
+
+    .nav-item.active {
+      background: rgba(37, 99, 235, 0.08);
+      border-color: rgba(37, 99, 235, 0.3);
+      color: var(--primary);
+      box-shadow: 0 4px 12px -5px rgba(37, 99, 235, 0.2);
+    }
+
+    .profile-info {
+      font-size: 0.9rem;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .info-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .info-label {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 2px;
+    }
+
+    .info-val {
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    /* ── 우측 컬럼: 본문 상세 ── */
+    .content-area {
+      padding: 60px 60px 100px 60px;
+      overflow-y: auto;
+    }
+
+    .section-title {
+      font-size: 1.8rem;
+      font-weight: 800;
+      margin-bottom: 30px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--card-border);
+      position: relative;
+      color: #111827;
+    }
+
+    .section-title::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 60px;
+      height: 2px;
+      background: var(--primary);
+    }
+
+    .intro-paragraph {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      font-weight: 400;
+      margin-bottom: 24px;
+      line-height: 1.8;
+    }
+
+    /* ── 자기소개서 가독성 스타일링 ── */
+    .cover-letter-body {
+      max-width: 800px;
+    }
+
+    .cover-letter-body h1 {
+      display: none;
+    }
+
+    .cover-letter-body h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-top: 40px;
+      margin-bottom: 16px;
+      color: #111827;
+      border-left: 4px solid var(--primary);
+      padding-left: 12px;
+    }
+
+    .cover-letter-body p {
+      font-size: 1.05rem;
+      line-height: 1.85;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      font-weight: 400;
+      word-break: keep-all;
+    }
+
+    /* ── 경력 카드 복원 ── */
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      margin-bottom: 60px;
+    }
+
+    .history-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 24px;
+      position: relative;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04);
+    }
+
+    .history-meta {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 0.85rem;
+    }
+
+    .history-period {
+      font-family: var(--font-mono);
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .history-org {
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .history-name {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: #111827;
+    }
+
+    .history-desc {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      font-weight: 400;
+      padding-left: 20px;
+    }
+
+    .history-desc li {
+      margin-bottom: 6px;
+    }
+
+    /* ── 프로젝트 카드 복원 ── */
+    .project-list {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    .project-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 36px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .project-card:hover {
+      border-color: rgba(37, 99, 235, 0.3);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+    }
+
+    .proj-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 16px;
+      margin-bottom: 20px;
+    }
+
+    .proj-num {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--primary);
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      margin-bottom: 4px;
+    }
+
+    .proj-name {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #111827;
+      margin: 0;
+    }
+
+    .proj-period {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .proj-summary {
+      font-size: 1rem;
+      color: var(--text-muted);
+      font-weight: 400;
+      margin-bottom: 20px;
+    }
+
+    .proj-features-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 10px;
+    }
+
+    .proj-features {
+      list-style-type: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 24px;
+      padding-left: 0;
+    }
+
+    .proj-features li {
+      position: relative;
+      padding-left: 20px;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .proj-features li::before {
+      content: '▹';
+      position: absolute;
+      left: 0;
+      color: var(--primary);
+      font-weight: bold;
+    }
+
+    .proj-features li strong {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .tag-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .tag {
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      background: rgba(37, 99, 235, 0.05);
+      border: 1px solid rgba(37, 99, 235, 0.1);
+      border-radius: 6px;
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    /* ── 반응형 레이아웃 ── */
+    @media (max-width: 900px) {
+      .portfolio-container {
+        grid-template-columns: 1fr;
+      }
+
+      .profile-sidebar {
+        position: static;
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--card-border);
+        padding: 40px 24px;
+      }
+
+      .content-area {
+        padding: 40px 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="status" style="text-align: center; padding: 100px 0; color: var(--text-muted); font-family: var(--font-outfit);">이력서를 불러오는 중입니다...</div>
+
+  <div class="portfolio-container" id="real-resume-container" style="display: none;">
+    
+    <!-- 좌측 컬럼: 프로필 카드 -->
+    <aside class="profile-sidebar">
+      <div>
+        <a href="../index.html" class="back-home-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          메인 허브로
+        </a>
+      </div>
+
+      <div class="profile-header">
+        <div class="avatar-placeholder">
+          <!-- 증명 사진 연동 -->
+          <img src="증명 사진.jpg" alt="김우태">
+        </div>
+        <h2 class="profile-name">김우태</h2>
+        <div class="profile-title">Game Client Developer</div>
+      </div>
+
+      <!-- 이력서 / 자소서 탭 네비게이션 -->
+      <nav class="resume-nav-list">
+        <a href="#resume" class="nav-item" id="nav-resume">
+          📄 상세 이력서
+        </a>
+        <a href="#cover-letter" class="nav-item" id="nav-cover-letter">
+          ✍️ 자기소개서
+        </a>
+      </nav>
+      
+      <div class="profile-info">
+        <div class="info-item">
+          <div class="info-label">Contact</div>
+          <div class="info-val">010-6471-8024</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">E-Mail</div>
+          <div class="info-val">rladnxo3577@naver.com</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Education</div>
+          <div class="info-val">한라대학교 컴퓨터공학과</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Core Stacks</div>
+          <div class="info-val">C# / Unity / Git</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Certificates</div>
+          <div class="info-val">정보처리기사 · 3D프린터기능사 · JLPT 3급</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 우측 컬럼: 본문 상세 (동적 바인딩 타겟) -->
+    <main class="content-area" id="main-content-window">
+      <!-- 렌더링 목적지 -->
+    </main>
+
+  </div>
+
+  <script>
+    const statusEl = document.getElementById('status');
+    const resumeContainer = document.getElementById('real-resume-container');
+    const contentWindow = document.getElementById('main-content-window');
+
+    // 라우터 해시값 매핑
+    function getHash() {
+      const hash = window.location.hash;
+      return (hash === '#cover-letter') ? 'cover-letter' : 'resume';
+    }
+
+    // 탭 UI 동기화
+    function syncTabs(currentTab) {
+      document.getElementById('nav-resume').classList.toggle('active', currentTab === 'resume');
+      document.getElementById('nav-cover-letter').classList.toggle('active', currentTab === 'cover-letter');
+    }
+
+    async function loadContent() {
+      const tab = getHash();
+      syncTabs(tab);
+      
+      statusEl.style.display = 'block';
+      resumeContainer.style.display = 'none';
+
+      try {
+        const filePath = (tab === 'cover-letter') ? 'cover_letter.md' : 'resume.md';
+        const response = await fetch(filePath);
+        if (!response.ok) throw new Error(`${filePath} 마크다운을 불러올 수 없습니다.`);
+        
+        const mdText = await response.text();
+        
+        // 파싱용 임시 노드
+        const tempDiv = document.createElement('div');
+        marked.use({ gfm: true, breaks: true });
+        tempDiv.innerHTML = marked.parse(mdText);
+
+        if (tab === 'resume') {
+          // 이력서 렌더러 가동 (기존 오리지널 카드뷰 재현)
+          renderResumeTab(tempDiv);
+        } else {
+          // 자기소개서 렌더러 가동
+          renderCoverLetterTab(tempDiv);
+        }
+
+        statusEl.style.display = 'none';
+        resumeContainer.style.display = 'grid';
+
+      } catch (err) {
+        statusEl.innerHTML = `<span style="color: #EF4444; font-weight: 600;">로드 실패: ${err.message}</span>`;
+      }
+    }
+
+    // 1. 이력서 탭 렌더러 (100% 오리지널 카드 그리드)
+    function renderResumeTab(tempDiv) {
+      contentWindow.innerHTML = `
+        <!-- 자기소개 -->
+        <section style="margin-bottom: 60px;">
+          <h2 class="section-title">Introduce</h2>
+          <div id="target-intro"></div>
+        </section>
+
+        <!-- 경력 사항 -->
+        <section style="margin-bottom: 60px;">
+          <h2 class="section-title">Experience</h2>
+          <div class="history-list" id="target-experience"></div>
+        </section>
+
+        <!-- 프로젝트 리스트 -->
+        <section>
+          <h2 class="section-title">Projects</h2>
+          <div class="project-list" id="target-projects"></div>
+        </section>
+      `;
+
+      const children = Array.from(tempDiv.children);
+
+      // 자기소개 바인딩
+      let introHtml = '';
+      let introStarted = false;
+      for (let el of children) {
+        if (el.tagName === 'H2' && el.textContent.includes('자기소개')) {
+          introStarted = true;
+          continue;
+        }
+        if (introStarted) {
+          if (el.tagName === 'H2') break;
+          el.classList.add('intro-paragraph');
+          introHtml += el.outerHTML;
+        }
+      }
+      document.getElementById('target-intro').innerHTML = introHtml;
+
+      // 경력 바인딩
+      const targetExp = document.getElementById('target-experience');
+      let expStarted = false;
+      let currentExpElements = [];
+      for (let el of children) {
+        if (el.tagName === 'H2' && el.textContent.includes('경력 사항')) {
+          expStarted = true;
+          continue;
+        }
+        if (expStarted) {
+          if (el.tagName === 'H2') {
+            if (currentExpElements.length > 0) {
+              renderExperienceCard(currentExpElements, targetExp);
+              currentExpElements = [];
+            }
+            expStarted = false;
+            continue;
+          }
+          if (el.tagName === 'H3') {
+            if (currentExpElements.length > 0) {
+              renderExperienceCard(currentExpElements, targetExp);
+              currentExpElements = [];
+            }
+          }
+          currentExpElements.push(el);
+        }
+      }
+      if (currentExpElements.length > 0) {
+        renderExperienceCard(currentExpElements, targetExp);
+      }
+
+      // 프로젝트 바인딩
+      const targetProj = document.getElementById('target-projects');
+      let projStarted = false;
+      let currentProjElements = [];
+      for (let el of children) {
+        if (el.tagName === 'H2' && el.textContent.includes('개발 프로젝트')) {
+          projStarted = true;
+          continue;
+        }
+        if (projStarted) {
+          if (el.tagName === 'H2') {
+            if (currentProjElements.length > 0) {
+              renderProjectCard(currentProjElements, targetProj);
+              currentProjElements = [];
+            }
+            projStarted = false;
+            continue;
+          }
+          if (el.tagName === 'H3') {
+            if (currentProjElements.length > 0) {
+              renderProjectCard(currentProjElements, targetProj);
+              currentProjElements = [];
+            }
+          }
+          currentProjElements.push(el);
+        }
+      }
+      if (currentProjElements.length > 0) {
+        renderProjectCard(currentProjElements, targetProj);
+      }
+    }
+
+    // 2. 자기소개서 탭 렌더러
+    function renderCoverLetterTab(tempDiv) {
+      contentWindow.innerHTML = `
+        <section class="cover-letter-body">
+          <h2 class="section-title">Cover Letter</h2>
+          <div id="target-cover-letter"></div>
+        </section>
+      `;
+      document.getElementById('target-cover-letter').innerHTML = tempDiv.innerHTML;
+    }
+
+    // 경력 조립 헬퍼
+    function renderExperienceCard(elements, parent) {
+      const h3 = elements[0];
+      const ul = elements.find(el => el.tagName === 'UL');
+      
+      let name = '';
+      let period = '';
+      let org = '';
+      let descHtml = '';
+      
+      const titleMatch = h3.textContent.match(/^(.+?)\s*\((.+?)\)$/);
+      if (titleMatch) {
+        name = titleMatch[1].trim();
+        period = titleMatch[2].trim();
+      } else {
+        name = h3.textContent;
+      }
+      
+      if (ul) {
+        const lis = Array.from(ul.children);
+        const orgLi = lis.find(li => li.textContent.includes('소속:'));
+        if (orgLi) {
+          org = orgLi.textContent.replace('소속:', '').replace(/\*/g, '').trim();
+          orgLi.remove();
+        }
+        
+        const descLi = lis.find(li => li.textContent.includes('담당 업무 및 성과:'));
+        if (descLi) {
+          const subUl = descLi.querySelector('ul');
+          if (subUl) {
+            descHtml = subUl.innerHTML;
+          } else {
+            descHtml = descLi.innerHTML;
+          }
+          descLi.remove();
+        } else {
+          descHtml = lis.filter(li => li.parentNode !== null).map(li => li.outerHTML).join('');
+        }
+      }
+      
+      const card = document.createElement('div');
+      card.className = 'history-card';
+      card.innerHTML = `
+        <div class="history-meta">
+          <span class="history-period">${period}</span>
+          <span class="history-org">${org}</span>
+        </div>
+        <h3 class="history-name">${name}</h3>
+        <ul class="history-desc">
+          ${descHtml}
+        </ul>
+      `;
+      parent.appendChild(card);
+      card.querySelectorAll('strong').forEach(st => st.style.color = 'var(--primary)');
+    }
+
+    // 프로젝트 조립 헬퍼
+    function renderProjectCard(elements, parent) {
+      const h3 = elements[0];
+      const ul = elements.find(el => el.tagName === 'UL');
+      const pStack = elements.find(el => el.tagName === 'P' && el.textContent.includes('기술 스택:'));
+      
+      let num = '';
+      let name = '';
+      let periodYear = '';
+      let periodDetail = '';
+      let summary = '';
+      let featuresTitle = '주요 기능 구현';
+      let featuresHtml = '';
+      let tagsHtml = '';
+      
+      const titleMatch = h3.textContent.match(/^(\d+)\.\s*(.+?)\s*\((.+?)\)$/);
+      if (titleMatch) {
+        num = `PROJECT #0${titleMatch[1]}`;
+        name = titleMatch[2].trim();
+        periodYear = titleMatch[3].trim();
+      } else {
+        name = h3.textContent;
+      }
+      
+      if (ul) {
+        const lis = Array.from(ul.children);
+        
+        const periodLi = lis.find(li => li.textContent.includes('개발 인원 및 기간:'));
+        if (periodLi) {
+          periodDetail = periodLi.textContent.replace('개발 인원 및 기간:', '').replace(/\*/g, '').trim();
+          periodLi.remove();
+        }
+        
+        const summaryLi = lis.find(li => li.textContent.includes('요약:'));
+        if (summaryLi) {
+          summary = summaryLi.innerHTML.replace('<strong>요약:</strong>', '').replace('요약:', '').trim();
+          summaryLi.remove();
+        }
+        
+        const titleLi = lis.find(li => li.textContent.includes('주요 구현 기술:') || li.textContent.includes('담당 역할 및 구현 기술:'));
+        if (titleLi) {
+          featuresTitle = titleLi.childNodes[0].textContent.replace(':', '').replace(/\*/g, '').trim();
+          const subUl = titleLi.querySelector('ul');
+          if (subUl) {
+            featuresHtml = subUl.innerHTML;
+          }
+          titleLi.remove();
+        } else {
+          featuresHtml = lis.filter(li => li.parentNode !== null).map(li => li.outerHTML).join('');
+        }
+      }
+      
+      if (pStack) {
+        const rawTags = pStack.textContent.replace('기술 스택:', '').split('·');
+        tagsHtml = rawTags.map(tagText => `<span class="tag">${tagText.trim()}</span>`).join('');
+      }
+      
+      const cleanDetail = periodDetail.replace('개발 (개인 프로젝트)', '').replace('개발 (팀 프로젝트)', '').trim();
+      
+      const card = document.createElement('div');
+      card.className = 'project-card';
+      card.innerHTML = `
+        <div class="proj-header">
+          <div>
+            <div class="proj-num">${num}</div>
+            <h3 class="proj-name">${name}</h3>
+          </div>
+          <span class="proj-period">${periodYear} (${cleanDetail})</span>
+        </div>
+        <p class="proj-summary">${summary}</p>
+        <div class="proj-features-title">${featuresTitle}</div>
+        <ul class="proj-features">
+          ${featuresHtml}
+        </ul>
+        <div class="tag-container">
+          ${tagsHtml}
+        </div>
+      `;
+      parent.appendChild(card);
+      card.querySelectorAll('strong').forEach(st => st.style.color = 'var(--primary)');
+    }
+
+    // 라우팅 이벤트 감지
+    window.addEventListener('hashchange', loadContent);
+    
+    // 초기 로딩
+    loadContent();
+  </script>
+
+</body>
+</html>
