@@ -133,6 +133,8 @@
       letter-spacing: -0.01em;
       margin-bottom: 6px;
       color: #111827;
+      border-left: none;
+      padding-left: 0;
     }
 
     .profile-title {
@@ -218,6 +220,8 @@
       border-bottom: 1px solid var(--card-border);
       position: relative;
       color: #111827;
+      border-left: none;
+      padding-left: 0;
     }
 
     .section-title::after {
@@ -247,14 +251,14 @@
       display: none;
     }
 
-    .cover-letter-body h2 {
+    #target-cover-letter h2 {
       font-size: 1.4rem;
       font-weight: 700;
       margin-top: 40px;
       margin-bottom: 16px;
       color: #111827;
-      border-left: 4px solid var(--primary);
-      padding-left: 12px;
+      border-left: none;
+      padding-left: 0;
     }
 
     .cover-letter-body p {
@@ -359,8 +363,8 @@
     }
 
     .proj-name {
-      font-size: 1.5rem;
-      font-weight: 800;
+      font-size: 1.4rem;
+      font-weight: 700;
       color: #111827;
       margin: 0;
     }
@@ -450,6 +454,67 @@
         padding: 40px 24px;
       }
     }
+
+    /* 플로팅 유틸리티 툴바 */
+    .utility-toolbar {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      display: flex;
+      gap: 8px;
+      z-index: 300;
+    }
+
+    .toolbar-btn {
+      display: inline-flex;
+      align-items: center;
+      padding: 10px 18px;
+      background: #FFFFFF;
+      border: 1px solid var(--card-border);
+      border-radius: 30px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .toolbar-btn:hover {
+      color: var(--primary);
+      border-color: rgba(37, 99, 235, 0.3);
+      box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.1);
+      transform: translateY(-1px);
+    }
+
+    .toolbar-btn svg {
+      margin-right: 6px;
+    }
+
+    /* ── 인쇄 전용 스타일 (PDF 내보내기용) ── */
+    @media print {
+      .utility-toolbar,
+      .back-home-btn,
+      aside.profile-sidebar {
+        display: none !important;
+      }
+
+      .portfolio-container {
+        display: block !important;
+      }
+
+      main.content-area {
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+
+      #main-content-window {
+        max-width: 100% !important;
+        padding: 0 !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -457,6 +522,18 @@
   <div id="status" style="text-align: center; padding: 100px 0; color: var(--text-muted); font-family: var(--font-outfit);">이력서를 불러오는 중입니다...</div>
 
   <div class="portfolio-container" id="real-resume-container" style="display: none;">
+    
+    <!-- 플로팅 유틸리티 툴바 -->
+    <div class="utility-toolbar">
+      <button onclick="window.print()" class="toolbar-btn" title="PDF로 저장 / 인쇄">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        PDF 다운로드
+      </button>
+    </div>
     
     <!-- 좌측 컬럼: 프로필 카드 -->
     <aside class="profile-sidebar">

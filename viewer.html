@@ -50,11 +50,71 @@
       line-height: 1.8;
     }
 
-    /* ── 그리드 레이아웃: 사이드바 + 메인 본문 ── */
+    /* ── 그리드 레이아웃: 사이드바 + 메인 본문 + 우측 목차 ── */
     .app-layout {
       display: grid;
-      grid-template-columns: 280px 1fr;
+      grid-template-columns: 280px 1fr 260px;
       min-height: 100vh;
+    }
+
+    /* ── 우측 고정 목차 사이드바 (Sticky) ── */
+    aside.toc-sidebar {
+      position: sticky;
+      top: 0;
+      align-self: start;
+      height: 100vh;
+      overflow-y: auto;
+      background: #F9FAFB;
+      border-left: 1px solid var(--card-border);
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      z-index: 90;
+    }
+
+    .toc-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-main);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 10px;
+      margin-bottom: 10px;
+    }
+
+    .toc-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toc-link {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: all 0.2s ease;
+      line-height: 1.4;
+      display: block;
+      border-left: 2px solid transparent;
+      padding-left: 10px;
+    }
+
+    .toc-link:hover {
+      color: var(--primary);
+      border-left-color: rgba(37, 99, 235, 0.2);
+    }
+
+    .toc-link.active {
+      color: var(--primary);
+      font-weight: 600;
+      border-left-color: var(--primary);
+    }
+
+    .toc-link.depth-h3 {
+      margin-left: 12px;
+      font-size: 0.8rem;
     }
 
     /* ── 좌측 고정 사이드바 (Sticky) ── */
@@ -338,9 +398,27 @@
     }
 
     /* ── 반응형 레이아웃 ── */
+    @media (max-width: 1200px) {
+      .app-layout {
+        grid-template-columns: 280px 1fr;
+      }
+      aside.toc-sidebar {
+        display: none;
+      }
+      .utility-toolbar {
+        right: 24px; /* 목차가 없어지면 우상단 끝으로 복귀 */
+      }
+    }
+
     @media (max-width: 900px) {
       .app-layout {
         grid-template-columns: 1fr;
+      }
+      aside.toc-sidebar {
+        display: none;
+      }
+      .utility-toolbar {
+        right: 24px;
       }
 
       aside.sidebar {
@@ -373,9 +451,65 @@
       }
     }
 
-    @media (max-width: 500px) {
-      .nav-item {
-        flex: 1 1 100%;
+    /* 플로팅 유틸리티 툴바 */
+    .utility-toolbar {
+      position: fixed;
+      top: 24px;
+      right: 284px; /* 우측 목차(TOC) 너비 260px + 여백 24px 고려하여 목차 바로 왼쪽에 붙임 */
+      display: flex;
+      gap: 8px;
+      z-index: 300;
+      transition: right 0.3s ease;
+    }
+
+    .toolbar-btn {
+      display: inline-flex;
+      align-items: center;
+      padding: 10px 18px;
+      background: #FFFFFF;
+      border: 1px solid var(--card-border);
+      border-radius: 30px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .toolbar-btn:hover {
+      color: var(--primary);
+      border-color: rgba(37, 99, 235, 0.3);
+      box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.1);
+      transform: translateY(-1px);
+    }
+
+    .toolbar-btn svg {
+      margin-right: 6px;
+    }
+
+    /* ── 인쇄 전용 스타일 (PDF 내보내기용) ── */
+    @media print {
+      .utility-toolbar,
+      aside.sidebar,
+      aside.toc-sidebar {
+        display: none !important;
+      }
+
+      .app-layout {
+        display: block !important;
+      }
+
+      main.document-content {
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+
+      .document-container {
+        max-width: 100% !important;
+        padding: 0 !important;
       }
     }
   </style>
@@ -417,6 +551,18 @@
       </nav>
     </aside>
 
+    <!-- 플로팅 유틸리티 툴바 -->
+    <div class="utility-toolbar">
+      <button onclick="window.print()" class="toolbar-btn" title="PDF로 저장 / 인쇄">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        PDF 다운로드
+      </button>
+    </div>
+
     <!-- 우측 마크다운 문서 렌더링 본문 -->
     <main class="document-content">
       <div class="document-container">
@@ -424,6 +570,12 @@
         <article id="markdown-content" class="markdown-body" style="display: none;"></article>
       </div>
     </main>
+
+    <!-- 우측 고정 목차 사이드바 (TOC) -->
+    <aside class="toc-sidebar" id="toc-sidebar" style="display: none;">
+      <div class="toc-title">📌 목차</div>
+      <div class="toc-list" id="toc-list"></div>
+    </aside>
 
   </div>
 
@@ -518,6 +670,83 @@
       } catch (e) {
         console.error("Highlight.js failed:", e);
       }
+
+      // 3. 동적 목차 (TOC) 생성
+      buildTOC();
+    }
+
+    // 동적 목차 (TOC) 생성 및 Scroll Spy 함수
+    function buildTOC() {
+      const tocSidebarEl = document.getElementById('toc-sidebar');
+      const tocListEl = document.getElementById('toc-list');
+      
+      tocListEl.innerHTML = ''; // 초기화
+      
+      const headers = contentEl.querySelectorAll('h2, h3');
+      if (headers.length === 0) {
+        tocSidebarEl.style.display = 'none';
+        return;
+      }
+      
+      // 데스크톱 해상도일 경우 노출되도록 인라인 display 제거 (미디어쿼리 제어 작동 가능하게 함)
+      tocSidebarEl.style.display = '';
+
+      // Scroll Spy 감지용 IntersectionObserver 설정
+      let activeObserver = window._tocObserver;
+      if (activeObserver) {
+        activeObserver.disconnect();
+      }
+
+      const observerOptions = {
+        root: null,
+        rootMargin: '-10% 0px -75% 0px',
+        threshold: 0
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const id = entry.target.id;
+            const activeLink = tocListEl.querySelector(`[data-target="${id}"]`);
+            if (activeLink) {
+              tocListEl.querySelectorAll('.toc-link').forEach(link => link.classList.remove('active'));
+              activeLink.classList.add('active');
+            }
+          }
+        });
+      }, observerOptions);
+
+      window._tocObserver = observer;
+
+      headers.forEach((header, index) => {
+        const headerId = `toc-header-${index}`;
+        header.id = headerId;
+        
+        const link = document.createElement('a');
+        link.href = `#${headerId}`;
+        link.className = 'toc-link';
+        link.dataset.target = headerId;
+        link.textContent = header.textContent.replace('▹', '').trim();
+        
+        if (header.tagName === 'H3') {
+          link.classList.add('depth-h3');
+        }
+        
+        // 부드러운 스크롤 이동 (아래에서부터 75% 높이 / 위에서부터 25% 영역에 정렬)
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const targetTop = header.getBoundingClientRect().top + window.pageYOffset;
+          const offsetPosition = targetTop - (window.innerHeight * 0.25);
+          
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
+          });
+        });
+
+        tocListEl.appendChild(link);
+        observer.observe(header);
+      });
     }
 
     // 각 프로젝트 마크다운에서 제목을 파싱하여 좌측 목차 명칭 동기화
