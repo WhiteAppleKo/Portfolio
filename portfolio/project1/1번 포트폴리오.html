@@ -13,7 +13,23 @@
   <!-- Highlight.js GitHub Dark CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
   <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/highlight.min.js"></script>
-  <script>hljs.highlightAll();</script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      document.querySelectorAll("pre code").forEach(block => {
+        try {
+          // 1. 개별 블록 동기식 구문 강조 실행 (예외 차단 격리)
+          hljs.highlightElement(block);
+        } catch (err) {
+          console.warn("highlight.js compile skipped:", err.message);
+        }
+
+        // 2. 강조 완료 직후 HTML 내부 ** 기호만 strong 태그 치환
+        let html = block.innerHTML;
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        block.innerHTML = html;
+      });
+    });
+  </script>
 
   <style>
     :root {
@@ -28,6 +44,11 @@
       --accent: #D97706;
       --font-outfit: 'Outfit', 'Noto Sans KR', sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
+
+      /* 코드 카드 전용 다크 토큰 */
+      --code-bg: #0d1117;
+      --code-border: #30363d;
+      --code-shadow: rgba(0, 0, 0, 0.15);
     }
 
     * {
@@ -177,26 +198,39 @@
 
     /* 코드 블록 스타일 */
     pre {
-      background: #F9FAFB;
-      border: 1px solid var(--card-border);
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
       border-radius: 12px;
       padding: 18px;
       margin: 20px 0;
       overflow-x: auto;
+      box-shadow: 0 10px 30px var(--code-shadow);
     }
 
     code {
       font-family: var(--font-mono);
-      font-size: 0.85rem;
-      color: #1F2937;
-    }
-
-    /* 텍스트 내 단일 코드 */
-    p code {
+      font-size: 0.85em;
       background: rgba(37, 99, 235, 0.05);
       padding: 2px 6px;
       border-radius: 4px;
       color: var(--primary);
+    }
+
+    pre code {
+      background: transparent !important;
+      padding: 0 !important;
+      color: #c9d1d9 !important;
+      font-size: 0.85rem !important;
+    }
+
+    /* 다크 코드 블록 내의 주석 및 특정 강조 요소 형광 하이라이트 */
+    pre code strong,
+    pre code b,
+    pre code span strong,
+    pre code .hljs-comment strong {
+      color: #ffca28 !important;
+      font-weight: 700 !important;
+      text-shadow: 0 0 8px rgba(255, 202, 40, 0.4);
     }
 
     blockquote {
@@ -264,7 +298,7 @@
 int portalSide = System.Math.Sign(Vector3.Dot(offsetFromPortal, transform.forward));
 int portalSideOld = System.Math.Sign(Vector3.Dot(traveler.previousOffsetFromPortal, transform.forward));
 
-// 내적값 부호의 전후 프레임 비교를 통한 경계선 관통 시점 판정
+// **경계선 관통 시점 판정** 내적값 부호의 전후 프레임 비교를 통한 경계선 관통 시점 판정
 if (portalSide != portalSideOld)
 {
     traveler.Teleport(transform, linkedPortal.transform, m.GetColumn(3), m.rotation);
@@ -328,7 +362,7 @@ public virtual void Teleport(Transform fromPortal, Transform toPortal, Vector3 p
     
     if (rb != null)
     {
-        // 로컬 방향 벡터 전환 곱연산을 통해 물리 속도 유지 전달
+        // **물리 속도 유지 전달** 로컬 방향 벡터 전환 곱연산을 통해 물리 속도 유지 전달
         rb.velocity = toPortal.TransformDirection(fromPortal.InverseTransformDirection(rb.velocity));
     }
 }</code></pre>

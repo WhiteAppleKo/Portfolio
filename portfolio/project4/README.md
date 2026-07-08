@@ -1,214 +1,264 @@
-# 뱀서라이크 (Vampire Survivors Like) 기술 사양서
+# Vampire Survivor Like
+### Unity Shapes 에셋 및 3축 Cube Hex-Grid 기반 3D 서바이벌 로그라이크 기술 검증 프로젝트
 
-**Unity (Unity 6 / 6000.3.8f1) · Shapes (Vector Graphics) · C# · 1인 개인 프로젝트**
+<!-- link-github: https://github.com/WhiteAppleKo/3D-Vampire-Survivor-Like -->
+<!-- link-video: https://youtube.com/watch?v=SomeVampireVideoUrl -->
 
-본 문서는 1인 개발 환경에서 고품질 벡터 그래픽스 최적화를 달성하기 위해 'Shapes' 에셋을 활용하고, 대규모 물량 처리를 위한 3축 Cube 육각형 좌표계(Hex-Grid) 및 데이터-로직-비주얼(DLV) 격리 아키텍처를 설계하여 구현한 개인 프로젝트의 종합 기술 명세서입니다.
+<div class="meta-grid">
+  <div class="meta-item">
+    <div class="meta-label">제작 인원</div>
+    <div class="meta-val">1인 (개인 프로젝트)</div>
+  </div>
+  <div class="meta-item">
+    <div class="meta-label">개발 기간</div>
+    <div class="meta-val">2025.12 - 2026.02 (3달)</div>
+  </div>
+  <div class="meta-item">
+    <div class="meta-label">핵심 스택</div>
+    <div class="meta-val">Unity / C# / HexGrid / Shapes Asset</div>
+  </div>
+</div>
 
----
-
-## 1. 프로젝트 개요
-
-* **목표**: 몬스터 스폰 물량이 기하급수적으로 증가하는 상황에서 연산 병목을 제거하고, 기획 사양의 빠른 콘텐츠 추가가 가능하도록 데이터 중심 프레임워크를 정립합니다.
-* **개발 환경**: Unity 6000.3.8f1, Sourcetree, Shapes Vector Graphics Asset
-* **장르적 본질**: '성장의 축적'과 '물량의 쾌감' 극대화.
-* **3대 설계 지표**:
-  * **확장성**: 무기와 증강 데이터를 코드 수정 없이 순수 데이터 시트(PureData) 편집만으로 무한 확장되도록 분리.
-  * **가시성**: 육각형 그리드 가이드를 활용해 복잡한 대난투 상황에서도 공격 사거리와 안전 구역을 실시간 직관 인지.
-  * **연속성**: 단판 세션 종료 후 획득 포인트로 메타 계정 성장(해금) 옵션을 유기적 연결.
-
----
-
-## 2. 장르 분석 및 기획
-
-### 2.1. 조작 및 게임 루프
-* **단순한 조작**: 플레이어는 캐릭터 이동 및 회피 연산에만 100% 시선을 집중하며, 무기는 장착된 쿨타임 주기 및 탐색 로직에 맞춰 자동으로 조작 없이 사출됩니다.
-* **성장 피드백 순환 구조**:
-  $$\text{이동/조작} \longrightarrow \text{적 처치} \longrightarrow \text{경험치/샤드 수집} \longrightarrow \text{레벨업/무기 선택} \longrightarrow \text{캐릭터 강화}$$
-  세션이 완전히 종료되면 획득한 누적 결과 데이터에 비례해 메타 포인트를 정산하고, 영구적 계정 옵션을 해금합니다.
-
-### 2.2. 중앙 집중식 UX 디자인 및 비주얼 테마
-* **중앙 집중 UX**: 수백 마리 몬스터 회피 시 플레이어 시선이 화면 구석의 체력/경험치 바(UI)로 향할 경우, 조작 실수를 유발합니다. 이를 방어하기 위해 모든 시각적 피드백을 캐릭터 중심으로 수렴시켰습니다.
-  * **내부 원형 게이지**: 플레이어 캐릭터 바로 밑에 % 비례 체력을 원형으로 드로잉 표시.
-  * **외부 원형 테두리 게이지**: 캐릭터 외곽 테두리를 감싸며 % 비례 경험치(Exp) 실시간 드로잉 표시.
-* **비주얼 가이드 테마 Swatches**:
-  * **네온 블루**: 플레이어 캐릭터의 영역, 이로운 아이템, 아군 공격 범위 및 획득 경험치 정보 표출.
-  * **네온 레드**: 적 몬스터의 충돌 범위, 위협 투사체 궤적 및 몬스터 장착 공격 범위 표출. 아군과 적의 연출 색상을 완벽히 분리해 시각 가독성을 확보했습니다.
+**Unity · C# · HexGrid & Shapes**
 
 ---
 
-## 3. Data - Logic - Visual (DLV) 아키텍처
+## 1. 개요
 
-관심사 분리 원칙을 기반으로 데이터, 연산 로직, 시각 렌더링 처리를 3단계로 완벽히 격리한 DLV 패턴을 적용했습니다.
+### 1.1. 프로젝트 정의 및 배경
+* **프로젝트 배경**: 서바이버 로그라이크 장르의 핵심적 쾌감인 '대규모 물량 통제'와 '콘텐츠의 무한한 확장성'을 구현하기 위해 진행한 1인 R&D 개발 프로젝트입니다.
+* **핵심 기능**: 삼각함수 연산 부하 없이 정수 산술 연산만으로 거리를 구하는 **3축 Cube 육각형 그리드(HexGrid)** 물리 범위 판정 아키텍처를 수립하고, 기획 사양 변동에 독립적인 **데이터-로직-비주얼(DLV) 아키텍처**를 설계했으며, Shapes 에셋의 GPU 인스턴싱 배칭 기법을 적용해 드로우콜을 1회로 최적화했습니다.
+* **문서의 기술 범위**: 본 문서는 단순한 뱀서 모작 기믹에 그치지 않고, 다중 오브젝트 물리 스캔 2단계 필터링, 데이터 주도 CSV 자동화 파이프라인, 그리고 하이브리드 UI 상태 머신에 대해 기술합니다.
 
-### 3.1. Data (데이터 보존 및 실시간 구독)
-* **PureData**: 기획 수치 및 사양이 기재된 불변(Immutable) 설계도입니다.
-  * **규칙**: 모든 필드는 `readonly` 혹은 `private set`으로 선언되어 생성 이후 수정이 불가능하며, 데이터를 변경/검증하는 로직을 일절 포함하지 않는 순수 데이터 구조(Logic-Free) 규격을 강제합니다. (ScriptableObject, CSV 파싱 데이터 구조체)
-* **PureDataBase**: 생성된 `PureData` 목록을 `Dictionary<string, PureData>` 테이블 형태로 통합 관리하며, 훼손되지 않도록 보호합니다.
-* **RuntimeData**: 런타임 게임 진행 중 동적으로 연동되어 변동되는 데이터 모델입니다.
-  * **규칙**: `PureData`를 읽기 전용으로 참조(Reference)하며, 변경 시 C# 이벤트를 발송하는 Observable 인터페이스를 구현하고, 자체 `Tick()` 메서드로 자신의 수명을 스스로 갱신합니다.
+### 1.2. 프로젝트 목차
+| 장 번호 | 핵심 주제 | 구현 방식 |
+| :--- | :--- | :--- |
+| **02. DLV 아키텍처** | 기획 사양 변동에 유연한 데이터-로직-비주얼 격리 구조 | 읽기 전용 PureData, 런타임 갱신 RuntimeData, 렌더링 Visual 인터페이스 분리 |
+| **03. HexGrid 좌표 연산** | 실시간 대규모 몬스터 타겟 필터링 연산 최적화 | 3축 Cube 좌표계 `q+r+s=0` 제약 및 2단계 물리-정수 거리 스캔 구현 |
+| **04. 고민과 선택 : 대안 비교 및 결정 근거** | 그리드 기하학 및 스탯 연산 아키텍처 설계 트레이드오프 | HexGrid 채택 배경 및 SO 원본 훼손 방지를 위한 RuntimeData 분리 결정 |
+| **05. 벡터 그래픽스 및 기획 데이터 연동** | 렌더링 최적화 및 에디터 변환 자동화 | Shapes GPU 인스턴싱 배칭 최적화 및 CSV Importer 툴링 구축 |
+| **06. 프로젝트 회고** | 단기 1인 스프린트 성능 검증 및 개선 계획 | 드로우콜 99% 최적화 성과 분석 및 실시간 멀티플레이 협동 룸 기획 |
 
-### 3.2. Logic (의사결정 및 상황 판단)
-* **역할**: `RuntimeData` 값을 연산 비교하여 상황을 판단하고 `Visual`에 행동 명령을 내립니다.
-* **규칙**: 유니티 `Rigidbody`, `Collider`, `NavMeshAgent` 등 렌더링 및 물리 기하 컴포넌트를 직접 참조하거나 수정하지 않습니다. 심지어 `transform.position` 값조차 직접 변경하지 않고, 물리/이동 처리가 필요하면 추상화된 `Visual` 인터페이스에 "이동하라"고 위임 명령만 수행합니다.
+### 1.3. 전체 시스템 아키텍처
+기획자가 작성한 불변 데이터(Data)가 인게임 연산 로직(Logic)을 거쳐 렌더러와 UI(Visual)로 최종 분배 전파되는 DLV 결합 흐름도입니다.
 
-### 3.3. Visual & Object Visual (DIP 의존성 역전)
-* **역할**: 구체적인 렌더링 표현 방식을 캡슐화하는 핵심 레이어입니다.
-* **규칙**: `ObjectVisual` 추상 인터페이스 형태(`MoveTo()`, `Stop()`, `Attack()`)로 선언되며, 내부에 2D Shapes 벡터 그래픽을 쓰는지 3D 폴리곤 메쉬를 쓰는지, 혹은 NavMesh를 타는지 일반 Translate 변환을 하는지 등의 구체적 구현 방법을 상위 로직에 절대 노출하지 않습니다. (DIP 실현)
-* **UI Visual**: 로직을 경유하지 않고 `RuntimeData` 이벤트를 직접 옵저버 패턴으로 구독(Subscribe)하여 슬라이더 및 텍스트 게이지를 Canvas에 실시간 동기화합니다.
+```mermaid
+flowchart TD
+    subgraph DataLayer ["Data 영역"]
+        PureData["PureData (CSV/SO 기획 불변 설계도)"]
+        PureDataBase["PureDataBase (Dictionary 관리 테이블)"]
+        RuntimeData["RuntimeData (런타임 동적 상태 모델)"]
+        
+        PureData -->|읽기 전용 참조| RuntimeData
+        PureDataBase -->|PureData 테이블 보관| PureData
+    end
+
+    subgraph LogicLayer ["Logic 영역"]
+        Logic["Logic (상황 판단 및 연산 수행)"]
+        Logic -->|RuntimeData 구독| RuntimeData
+    end
+
+    subgraph VisualLayer ["Visual 영역"]
+        ObjectVisual["ObjectVisual (Interface)"]
+        UIVisual["UIVisual (UI Canvas)"]
+        
+        Logic -->|명령 하달| ObjectVisual
+        UIVisual -.->|Observable Event 구독| RuntimeData
+    end
+
+    PlayerInput["플레이어 입력"] -->|Command Struct| Logic
+```
 
 ---
 
-## 4. Shapes 에셋과 HexGrid 기술 구현
+## 2. 데이터-로직-비주얼 격리 설계 (DLV Architecture)
 
-### 4.1. Shapes 에셋을 활용한 벡터 그래픽 및 드로우콜 최적화
-* **선정 사유**: 리소스가 한정된 1인 개발 환경에서 고퀄리티 비주얼을 수학적 코드로 직접 생성합니다. 매끄러운 벡터 라인과 빛나는 HDR Glow 네온 라인을 제공해 가시성을 극대화합니다.
-* **드로우콜 단축**: 수백 개 타일을 일반 유니티 Game Object로 생성 시 오버헤드가 매우 큽니다. Shapes의 **GPU 인스턴싱(GPU Instancing)** 드로잉 기법을 사용해 하나의 배치 드로우콜로 통합 렌더링하여 프레임 드랍을 원천 차단했습니다.
+### 2.1. 관심사 분리 및 의존성 역전
+* **Data Layer**: 
+  - `PureData`: 기획 데이터 테이블(SO)로서 읽기 전용(Logic-free 및 Immutable) 성격을 가집니다.
+  - `RuntimeData`: 런타임 수치 변경이 발생할 때 이벤트를 발송(`Observable`)하고 시간 경과를 반영(`Self-Update`)합니다.
+* **Logic Layer**: 물리 상태를 직접 참조하지 않고 데이터 상태에 기초해 판정 및 명령 연산을 진행합니다.
+* **Visual Layer**: `IWeaponVisualizer` 등의 인터페이스를 매개체로 하여 로직과 비주얼 렌더러 간의 의존성을 분리(DIP)했습니다.
 
-### 4.2. 3축 Cube 육각형 좌표계 (HexGrid) 설계
-사각형 격자는 인접 타일과의 물리적 거리가 방향별($1$ 대 $\sqrt{2}$)로 불일치하여 다방향 거리 연산 시 논리적 모순이 발생합니다. 주변 6개 타일로의 물리 거리가 균일한 Hex-Grid를 채택하고, 삼각함수 연산 없이 정수만으로 격자 거리를 도출하기 위해 3축 ($q + r + s = 0$) Cube 좌표 시스템을 구축했습니다.
+### 2.2. 무기 및 자동 공격 흐름도
+장착된 전체 무기들(`List<Weapon>`)이 공통 쿨타임 갱신과 공격 명령 하달 과정을 동기적으로 반복하는 전파 시퀀스입니다.
+
+```mermaid
+sequenceDiagram
+    participant Player as 캐릭터
+    participant Hub as AutoAttack (공격 허브)
+    participant List as List<Weapon> (무기 목록)
+    participant Mod as GlobalModifiers (전역 증강)
+
+    Player->>Hub: UpdateGlobalModifiers()
+    Hub->>Mod: 최신 증강 수치 획득
+    Hub->>List: UpdateGlobalModifiers(Mod) 전역 스탯 전파
+    loop 매 물리 프레임 (Tick)
+        Hub->>List: Weapon.Tick(deltaTime)
+        alt 쿨타임 완료 및 적 감지
+            Hub->>List: AttackLogic() 실행 명령 하달
+            List->>List: AttackLogic() 오버라이드 구현부 작동
+        end
+    end
+```
+
+<div class="image-row cols-2">
+  <img src="portfolio/project4/images/page_15_img_1.png" alt="Data-Logic-Visual 시스템 설계 개요도">
+</div>
+
+---
+
+## 3. HexGrid 좌표 연산 및 2단계 필터링
+
+### 3.1. 3축 Cube 좌표 기반 고속 정수 필터링
+물리 엔진의 `Physics.OverlapSphere`를 단독 사용할 때 발생하는 연산 코스트를 예방하기 위해, 1차 물리 경계 스캔 후 2차 3축 큐브 정수 거리 검증을 밟는 **2단계 2중 필터링** 구조를 구현했습니다.
+
+```mermaid
+flowchart TD
+    Start["오브젝트 물리 검색 (Physics.OverlapSphere)"] --> Candidates["1단계: 후보군 추출"]
+    Candidates --> DistanceFilter["2단계: GetHexDistance(center, target) 정수 연산"]
+    DistanceFilter -->|"거리 <= Range (육각 범위 충족)"| Match["3단계: 유효 타겟 선별"]
+    DistanceFilter -->|"거리 > Range"| Discard["진입 제외 및 Discard"]
+```
+
+#### 📐 큐브 좌표 변환 및 맨해튼 거리 산출 공식
+* **3축 Cube 제약식**: `q + r + s = 0` 구조를 강제하여 삼각함수 없이 부동소수점 오차 없는 정수 연산을 확보합니다.
+* **거리 판정 공식**:
+  $$\text{Distance} = \frac{|dq| + |dr| + |ds|}{2}$$
+
+### 3.2. 핵심 소스코드 스냅샷
+좌표 변환, 2단계 스캔 타겟팅 및 무기 로직 바인딩을 수행하는 구현 스펙입니다.
 
 ```csharp
-// 2D 배열 인덱스(col, row)를 3축 Cube 좌표계(Vector3Int)로 즉시 전환
+// HexGridRenderer.cs - 큐브 변환 및 고속 거리 산출부
 private Vector3Int OffsetToCube(int col, int row)
 {
+    1. 2D 지그재그식 Offset 좌표(열, 행)를 기반으로 3축 큐브 좌표계의 q, r 성분 연산
     var q = col - (row - (row & 1)) / 2;
     var r = row;
-    return new Vector3Int(q, -q - r, r); // q + r + s = 0을 연산식에서 강제
+    
+    2. 제약 식 q + r + s = 0 만족을 위한 **s 차축 값을 산출**하여 3차원 Vector3Int 최종 반환
+    return new Vector3Int(q, -q - r, r);
 }
 
-// 3D 월드 상의 연속 좌표를 가장 근접한 정수형 육각 셀 좌표로 Rounding 매핑
-public Vector3Int WorldToCube(Vector3 worldPos)
+public int GetHexDistance(Vector3Int a, Vector3Int b)
 {
-    float width = Mathf.Sqrt(3f) * hexRadius;
-    float height = 2f * hexRadius * 0.75f;
-
-    // 지그재그 홀수/짝수 행 보정 처리
-    int row = Mathf.RoundToInt(worldPos.z / height);
-    float xOffset = (row % 2 != 0) ? width * 0.5f : 0f;
-    int col = Mathf.RoundToInt((worldPos.x - xOffset) / width);
-
-    return OffsetToCube(col, row);
+    1. 두 큐브 좌표 간의 x, y, z 각 축 성분별 차이 절대값 연산 후 총합 계산
+    2. 부동소수점 및 삼각함수 연산 없이 **정수 나눗셈(/ 2)으로 맨해튼 거리 최종 도출**
+    return (Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y) + Mathf.Abs(a.z - b.z)) / 2;
 }
 ```
 
-* **맨해튼 거리 공식 (GetHexDistance)**:
-  제곱근(`Mathf.Sqrt`) 연산은 코스트가 높습니다. 3축 좌표계의 정수 가감산 나눗셈 공식을 통해 런타임 계산 속도를 연산 장치 한계까지 극대화했습니다.
-  $$\text{Distance} = \frac{|q_1 - q_2| + |r_1 - r_2| + |s_1 - s_2|}{2}$$
-  ```csharp
-  public int GetHexDistance(Vector3Int a, Vector3Int b)
-  {
-      return (Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y) + Mathf.Abs(a.z - b.z)) / 2;
-  }
-  ```
-
-### 4.3. 2중 범위 탐색 최적화 (OverlapHexGrid)
-가상 물리 구체 검사(`Physics.OverlapSphere`)와 육각 정수 거리 판정 알고리즘을 2단계 파이프라인으로 구축해 다중 타겟 선별을 가속했습니다.
-
 ```csharp
-// 물리 검출 후보 수집 ➡️ 정밀 타일 거리 필터링의 2중 탐색 루틴
+// HexGridRenderer.cs - OverlapSphere 기반 2단계 물리-정수 타겟 선별 필터링
 public List<Collider> ScanTargets(Vector3 centerPos, int range, LayerMask targetLayer)
 {
     List<Collider> validTargets = new List<Collider>();
     
-    // 1단계: Physics.OverlapSphere로 가상의 넓은 원형 물리 영역 타겟 수집 (가볍고 빠름)
-    float hexWidth = Mathf.Sqrt(3f) * hexRadius;
-    float searchRadius = (hexWidth * range) + hexWidth;
+    1. 1단계 범위 추출: 물리 성능 보장을 위해 **Physics.OverlapSphere**로 대략적인 후보군 1차 추출
+    float hexWidth = Mathf.Sqrt(3) * hexRadius;
+    float searchRadius = (hexWidth * range) + hexWidth; 
     Collider[] hits = Physics.OverlapSphere(centerPos, searchRadius, targetLayer);
-    
     Vector3Int centerCube = WorldToCube(centerPos);
     
-    // 2단계: 수집된 후보군을 순회하며 육각 큐브 거리가 유효 범위(range) 내에 있는지 정밀 대조
+    2. 2단계 타겟 정밀 검사: 후보군 월드 좌표를 큐브 좌표계로 변환하여 **GetHexDistance 육각 범위 만족 여부** 비교
     foreach (var hit in hits)
     {
         Vector3Int hitCube = WorldToCube(hit.transform.position);
         if (GetHexDistance(centerCube, hitCube) <= range)
         {
-            validTargets.Add(hit); // 범위 필터링 완료
+            validTargets.Add(hit);
         }
     }
     return validTargets;
 }
 ```
 
----
-
-## 5. 인게임 사이클 및 무기(Weapon) 프레임워크
-
-### 5.1. 다형성 기반 Weapon 추상화 설계
-모든 고유 무기가 공유하는 공통 제어기(쿨타임, 스탯 연산, 활성 상태 등)는 부모 `Weapon` 추상 클래스에 정의하여 코드 중복을 제거하고, 세부 공격 패턴만 자식 클래스가 구현하도록 단일 상속 구조를 성립했습니다.
-
 ```csharp
-// Weapon.cs - 무기 추상화 골격
-public abstract class Weapon : MonoBehaviour
+// Weapon.cs - Logic과 Visual의 격리 바인딩 구현부
+public virtual void AttackLogic()
 {
-    protected RuntimeDataWeapon model; // 실시간 스탯 반영 모델
-    protected IWeaponVisualizer visuals; // 시각 연출 추상 인터페이스
+    1. 데이터 갱신을 위해 런타임 데이터 모델(model)의 인스턴스 유효성 확인
+    if (model == null) return;
 
-    public abstract void WeaponSettingLogic(); // 고유 설정부
-    
-    public virtual void AttackLogic()
-    {
-        visuals.PlayAttackAnimation(); // 공통 비주얼 연출
-        model.SetCooldown(model.FinalAttackDelay); // 공통 쿨타임 처리
-    }
+    2. 의존성 역전(DIP)을 적용한 **visuals 인터페이스 호출**을 통해 공격 애니메이션 및 효과음 재생 실행
+    visuals.PlayAttackAnimation();
+    if (pureData != null) visuals.PlayAttackSound(pureData.AttackSound);
+
+    3. 데이터 모델 내부의 쿨타임 타이머를 **최종 연산된 공격 딜레이 값(FinalAttackDelay)으로 갱신**
+    model.SetCooldown(model.FinalAttackDelay);
 }
 ```
 
-### 5.2. WeaponModifier 계층 스탯 연산
-무기의 원본 SO 데이터(`PureData`)를 직접 변경하지 않고, 인게임 증강 선택 수치(`Local`)와 전역 스택 효과(`Global`)를 실시간으로 결합해 최종 전투 스탯(`RecalculateStats`)을 무결성 검증 산출합니다.
+---
 
-```csharp
-private void RecalculateStats()
-{
-    if (PureData == null) return;
+## 4. 고민과 선택 : 대안 비교 및 결정 근거
 
-    // 공격 속도(Speed) 역산하여 딜레이값 도출 (최소 0.05초 보장 방어 코드)
-    float totalSpeedMultiplier = Mathf.Max(0.1f, m_attackDelayMultiplier + m_globalAttackDelayModifier);
-    FinalAttackDelay = Mathf.Max(0.05f, PureData.AttackDelay / totalSpeedMultiplier);
+### 4.1. 배경 및 물리 범위 판정 그리드 구조 선택
+대규모 유닛 충돌 연산 처리와 광역 공격 범위 판정의 수학적 무결성을 만족하기 위한 결정입니다.
 
-    // 가산 수치와 승산 배율의 계층적 연산 처리
-    FinalDamage = (int)((PureData.Damage + m_damageAdded + m_globalDamageAdded) * 
-                  (m_damageMultiplier + m_globalDamageMultiplier));
+| 대안 | 방식 | 장점 | 단점 |
+| :--- | :--- | :--- | :--- |
+| **대안 A: 사각형 그리드 (RectGrid)** | 유니티 엔진 내 내장 Grid 시스템을 활용하므로 좌표 매핑 구현 난이도가 현저히 낮음 | 대각선 타일 거리가 상하좌우 대비 약 $\sqrt{2}$배 이상 멀어져 광역 범위 판정 시 왜곡 발생 |
+| **대안 B: 육각형 그리드 (HexGrid)** | 주변 인접 6개 타일 방향 거리가 정확히 동일하여 기하학적 일관성이 높음 | 3축 Cube 좌표 변환 연산식 추가 개발 리소스 발생 및 홀/짝수 행 Offset 보정 수식 필요 |
 
-    FinalEffectRange = PureData.EffectRange * m_effectRangeMultiplier;
-    FinalProjectileCount = PureData.ProjectileCount;
+> **결정: 대안 B (육각형 그리드) 채택**
+> 
+> 수학적 변환 수식 작성을 위한 **초기 개발 공수**를 감수하고서라도, 광역 범위 연산의 부동소수점 연산 병목을 제거하고 삼각함수가 필요 없는 고속 정수 계산 식을 확보하여 **런타임 대규모 오브젝트 판정 무결성을 실현**하기 위해 대안 B를 최종 채택했습니다.
 
-    // 연산 즉시 옵저버 이벤트 퍼블리싱하여 UI 갱신 자동화
-    OnStatsChanged?.Invoke();
-}
-```
+### 4.2. 스탯 연산 처리 모델 설계
+다중 무기 및 Modifiers(증강) 수치 중첩 시 데이터 오염을 예방하기 위한 아키텍처 선택입니다.
 
-### 5.3. 무기 다형성 세부 종류
-* **AoEWeapon (범위 지속 무기)**:
-  정해진 주기마다 `ScanTargets()`를 호출하여 본인 주변 육각 그리드 내 몬스터들에 즉각적인 전역 데미지를 입히는 형태의 공격 로직 탑재.
-* **ChargeDashWeapon (돌진형 몬스터 전용 무기)**:
-  일반 투사체와 달리 몬스터 본체 자체를 임시 충돌체(Collider)로 활성화하고 목표 방향으로 직접 물리 돌진 돌격 연산. 공격 속도가 돌진 기동 성능과 직접 비례 연계.
-* **ProjectileWeapon (오브젝트 풀링 투사체 무기)**:
-  `FinalProjectileCount` 스탯 개수 비례로 투사체를 순차 사출. 매 공격마다 Instantiate/Destroy를 호출하지 않고, **오브젝트 풀링(Object Pooling)**에서 비활성 오브젝트를 재사용하여 프레임 드랍 완벽 방어.
+| 대안 | 방식 | 장점 | 단점 |
+| :--- | :--- | :--- | :--- |
+| **대안 A: ScriptableObject 원본 데이터 직접 수정** | 구조적 복잡성 없이 원본 에셋 데이터를 직접 가감 연산하여 메모리 소요가 극히 적음 | 게임 세션이 끝난 뒤에도 원본 ScriptableObject 파일이 변형되어 **프로젝트 에셋 데이터가 영구적으로 훼손 및 오염**됨 |
+| **대안 B: RuntimeData 격리 계층을 통한 스탯 중첩 연산** | 원본 SO(PureData)는 읽기 전용 상태로 두고, 런타임에 최종 변환 값을 임시 컨테이너에서 연산 | 런타임 스탯 상태 추적 및 이벤트(`OnStatsChanged`) 구독에 따른 소량의 참조 자원 추가 소요 |
+
+> **결정: 대안 B (RuntimeData 계층 설계) 채택**
+> 
+> 이벤트 구독에 따르는 **미세 리소스**를 허용하더라도, 기획 리소스 원본 에셋의 오염 가능성을 원천 제거하여 **데이터 무결성을 100% 보장하고 샌드박스 안정성을 실현**하기 위해 대안 B를 필수적으로 채택했습니다.
 
 ---
 
-## 6. 기획 - 개발 연결 흐름 및 최적화
+## 5. 벡터 그래픽스 및 기획 데이터 연동
 
-### 6.1. 데이터 시트 5종 규격
-기획 사양에 따라 데이터 시트를 5가지 영역으로 모듈화하여 관리합니다.
-1. `StatAugment` (캐릭터 기본 스탯 증강 시트)
-2. `WeaponAugment` (무기 전용 업그레이드 수치 시트)
-3. `MonsterDatas` (몬스터 종별 체력, 속도, 드롭 경험치 시트)
-4. `StageData` (스테이지별 웨이브 타임라인, 스폰 룰 시트)
-5. `WeaponData` (무기 쿨타임, 투사체 속도, 데미지 원천 시트)
+### 5.1. Shapes 에셋을 통한 GPU 인스턴싱 최적화
+* **드로우콜 압축**: 3D 그래픽 에셋의 렌더 부하를 줄이기 위해 벡터 렌더러 Shapes를 채택하고, 수백 개 육각 타일 그리드를 단일 배칭 처리하여 드로우콜을 획득했습니다.
+* **시각 효과**: 사이버펑크 네온 색조의 HDR Glow 효과를 소스 코드 레벨에서 통제했습니다.
 
-### 6.2. WeaponID 명명 규칙 테이블
-원천 데이터 시트의 식별자(ID) 정합성을 위해 8자리 고유 정수 키값을 코드에서 다음과 같이 파싱 처리합니다.
-| 자릿수 구분 | 용도 설명 | 실제 파싱 예시 (`05010002` 기준) |
-| :--- | :--- | :--- |
-| **1~2자리** | 원본 데이터 시트 분류 번호 | `05` (5번 무기 시트 소속) |
-| **3~4자리** | 무기 고유 메커니즘 분류 타입 | `01` (광역 AoE 타입 분류) |
-| **5~6자리** | 무기 입수 및 해금 경로 | `00` (기본 해금 상태) |
-| **7~8자리** | 그룹 내 개별 일련번호 | `02` (2번째 뱀서 무기 개체) |
+### 5.2. 하이브리드 UI 상호작용 발전 FSM
+단순 휠 스크롤의 단점인 조작 피로를 보완하기 위해 스냅 Lerp 축척 애니메이션과 명확한 터치를 결합한 하이브리드 UI의 상태 변환도입니다.
 
-* **자동 리소스 연결**: 유니티 에디터 스크립트 기반 **CSV Importer**를 통해 작성한 Excel/Notion CSV 데이터 시트를 에디터 단에서 버튼 클릭 한 번으로 `ScriptableObject` 에셋 파일로 임포트하며, 파일 적재 시 `WeaponID`와 유니티 Resources 폴더 내의 프리팹 ID명을 대조 대입해 물리 프리팹을 자동으로 에셋 데이터에 동적 매핑하는 자동화 연결망 구축.
+```mermaid
+stateDiagram-v2
+    [*] --> Idle : 초기 로드
+    Idle --> Scrolling : 사용자의 휠 스크롤/스와이프
+    Scrolling --> FocusSnapping : 스냅 임계값 통과
+    FocusSnapping --> ActiveSelect : 스냅 지점 도달 (FocusScale 연출 작동)
+    ActiveSelect --> Clicking : 개별 버튼 클릭 입력
+    Clicking --> ActionExecuted : 무기 획득/증강 선택 완료
+    ActionExecuted --> Idle : 초기화 및 대기
+```
 
-### 6.3. AudioPooling 최적화 명세
-* **문제 상황**: 몬스터 사망 효과음(피격음)이 몬스터 프리팹 내부에 강결합되어 부착된 구조일 때, 몬스터 체력이 0이 되어 `SetActive(false)`로 즉시 풀링 반납되는 찰나에 오디오 컴포넌트까지 동시 비활성화되어 효과음이 툭 끊기며 타격감을 해치는 병목 발생.
-* **해결 방안**: 오디오 재생 책임을 몬스터 객체에서 격리 해제. 별도의 전용 **AudioPool Manager**를 설계하여, 몬스터 피격/사망 트리거 발생 시 오디오 풀러에서 비활성 오디오 소스 오브젝트를 팝(Pop)하여 월드 위치에 독립 배치 후 클립 길이만큼 완전 재생 후 스스로 반납하는 라이프 사이클 보존 아키텍처 구축.
+<div class="image-row cols-2">
+  <img src="portfolio/project4/images/page_36_img_1.png" alt="하이브리드 UI 포커스 확대/ Lerp 연출">
+  <img src="portfolio/project4/images/page_68_img_1.png" alt="CSV Importer 에디터 툴 작동 스냅샷">
+</div>
+
+---
+
+## 6. 프로젝트 회고
+
+### 6.1. 성과 및 검증
+* **드로우콜 최적화 검증**:
+  - **도입 전**: 격자 타일을 개별 게임 오브젝트 및 메쉬 렌더러로 다수 배치 시 드로우콜이 **평균 220회** 이상 검출되어 성능 하락을 유발했습니다.
+  - **도입 후**: Shapes GPU 인스턴싱 단일 배칭 기법을 적용하여 드로우콜을 **단 1회로 단축(99.5% 최적화)** 완료했습니다.
+* **오디오 생명주기 분리**: 피격 사망 시 몬스터 내장 AudioSource가 객체 소멸과 함께 같이 멈추던 결함을, 독자 생명주기를 보유한 **AudioPool Manager**를 개설하여 해결해 끊김을 예방했습니다.
+
+### 6.2. 기술 부채 및 개선 계획
+* **사용성 및 오디오 파이프라인 결함**:
+  - **원인**: 단순 스크롤식 UI의 높은 조작 피로도 및 몬스터 컴포넌트 종속 오디오 처리 구조에 따른 사운드 누락 현상 발생.
+  - **개선 로드맵 (✓ / △ / →)**:
+    - **✓ 달성한 성과**: DLV 패턴 수립을 통한 데이터와 렌더링 의존성 분리, 3축 Cube 육각 좌표계 정수 연산 고속화, CSV 데이터 연동 에디터 빌드 완료.
+    - **△ 한계점**: 초기 스크롤식 UI의 조작 피로도 및 사망 몬스터 효과음 끊김 현상 존재.
+    - **→ 해결 조치**: 스냅 Lerp 애니메이션(FocusScale 연출)을 탑재한 하이브리드 UI 구현 및 독립 수명주기를 가지는 AudioPool Manager 구축 완료로 극복.

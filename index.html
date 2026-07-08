@@ -10,21 +10,15 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
+  <!-- 공통 디자인 시스템 (theme.css) -->
+  <link rel="stylesheet" href="theme.css">
   
   <style>
-    /* ── 디자인 토큰 & 초기화 ── */
+    /* ── index.html 전용 디자인 토큰 ── */
     :root {
-      --bg-dark: #FFFFFF;
-      --card-bg: #FFFFFF;
-      --card-border: #E5E7EB;
-      --text-main: #222222;
-      --text-muted: #4B5563;
-      --primary: #2563EB; /* Blue */
-      --primary-glow: rgba(37, 99, 235, 0.05);
-      --secondary: #4F46E5; /* Indigo */
-      --accent: #D97706; /* Amber */
-      --font-outfit: 'Outfit', 'Noto Sans KR', sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
+      --bg-dark: var(--bg-light);
+      --font-outfit: var(--font-sans);
+      --primary-glow: color-mix(in srgb, var(--primary) 5%, transparent);
     }
 
     * {
@@ -60,8 +54,8 @@
     .badge {
       display: inline-block;
       padding: 6px 14px;
-      background: rgba(37, 99, 235, 0.06);
-      border: 1px solid rgba(37, 99, 235, 0.15);
+      background: color-mix(in srgb, var(--primary) 6%, transparent);
+      border: 1px solid color-mix(in srgb, var(--primary) 15%, transparent);
       border-radius: 9999px;
       color: var(--primary);
       font-size: 0.85rem;
@@ -75,7 +69,7 @@
       font-size: 3rem;
       font-weight: 800;
       letter-spacing: -0.02em;
-      background: linear-gradient(135deg, #111827 30%, var(--primary) 100%);
+      background: linear-gradient(135deg, var(--heading-color) 30%, var(--primary) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       margin-bottom: 16px;
@@ -110,8 +104,8 @@
 
     .profile-summary:hover {
       transform: translateY(-4px);
-      border-color: rgba(99, 102, 241, 0.45);
-      box-shadow: 0 15px 30px -10px rgba(99, 102, 241, 0.3);
+      border-color: color-mix(in srgb, var(--secondary) 45%, transparent);
+      box-shadow: 0 15px 30px -10px color-mix(in srgb, var(--secondary) 30%, transparent);
     }
 
     .profile-item {
@@ -188,7 +182,7 @@
 
     .portfolio-card:hover {
       transform: translateY(-6px);
-      border-color: rgba(37, 99, 235, 0.3);
+      border-color: color-mix(in srgb, var(--primary) 30%, transparent);
       box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
     }
 
@@ -229,8 +223,8 @@
     .card-tag {
       font-size: 0.75rem;
       padding: 4px 10px;
-      background: rgba(37, 99, 235, 0.05);
-      border: 1px solid rgba(37, 99, 235, 0.1);
+      background: color-mix(in srgb, var(--primary) 5%, transparent);
+      border: 1px solid color-mix(in srgb, var(--primary) 10%, transparent);
       border-radius: 6px;
       color: var(--text-muted);
     }
@@ -245,7 +239,7 @@
     }
 
     .portfolio-card:hover .card-link-btn {
-      color: #3B82F6;
+      color: var(--secondary);
     }
 
     .card-link-btn svg {
@@ -307,7 +301,7 @@
 
     .resume-btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
+      box-shadow: 0 6px 20px color-mix(in srgb, var(--secondary) 45%, transparent);
       border-color: rgba(255, 255, 255, 0.2);
     }
 
@@ -332,7 +326,7 @@
   <header>
     <div class="badge">Unity Game Client Developer</div>
     <h1 id="main-header-title">Technical Portfolio Hub</h1>
-    <p class="subtitle">객체지향 설계 원칙(SOLID)과 확장성을 지향하는 게임 개발자 포트폴리오 아카이브</p>
+    <p class="subtitle">소통하는 게임 개발자 포트폴리오 아카이브</p>
     
     <a href="resume/resume_viewer.html" class="profile-summary" id="profile-card">
       <div class="profile-item">
@@ -357,7 +351,7 @@
         <line x1="16" y1="17" x2="8" y2="17"></line>
         <polyline points="10 9 9 9 8 9"></polyline>
       </svg>
-      상세 이력서 보기
+      상세 이력서 및 자기소개서 보기
     </a>
   </header>
 
@@ -368,12 +362,11 @@
       <!-- 1번 포트폴리오 -->
       <a href="viewer.html#1" class="portfolio-card" id="card-proj-1">
         <div class="card-num">PROJECT #01</div>
-        <h3 class="card-title">확률 기반 크래프팅 시스템</h3>
-        <p class="card-desc">UI와 비즈니스 로직을 완벽히 분리하고, 주입형 난수 함수로 100% 경로 단위 테스트를 보장하는 제작 시스템 설계.</p>
+        <h3 class="card-title">[프로젝트 1 상세 작성]</h3>
+        <p class="card-desc">첫 번째 대표 프로젝트의 핵심 아키텍처 성과 및 최적화 기획 요약을 작성해 넣으세요.</p>
         <div class="card-tags">
-          <span class="card-tag">DIP/Event</span>
-          <span class="card-tag">Unit Test</span>
-          <span class="card-tag">LINQ</span>
+          <span class="card-tag">대기 중</span>
+          <span class="card-tag">대기 중</span>
         </div>
         <div class="card-link-btn">
           상세 기술 문서 보기
@@ -453,7 +446,7 @@
         const tagsEl = card.querySelector(".card-tags");
 
         // 프로젝트 마크다운 동적 읽기
-        fetch(`./portfolio/project${num}/README.md`)
+        fetch(`./portfolio/project${num}/README.md?t=${new Date().getTime()}`)
           .then(res => {
             if (!res.ok) throw new Error("Readme not found");
             return res.text();
@@ -473,50 +466,96 @@
         let desc = "";
         let tags = [];
 
-        // 1. 제목 추출 (# 헤더)
+        // 1. 제목 및 부제(H3) 추출
         for (let line of lines) {
-          if (line.startsWith("#")) {
+          if (line.startsWith("#") && !line.startsWith("##") && !line.startsWith("###")) {
             title = line.replace(/^#+\s*/, "").replace(/—/g, "-");
-            break;
+          }
+          if (line.startsWith("###") && !desc) {
+            desc = line.replace(/^###+\s*/, "");
           }
         }
 
-        // 2. 한 줄 요약 설명 추출
-        let foundHeader = false;
-        for (let line of lines) {
-          if (line.startsWith("#")) {
-            foundHeader = true;
-            continue;
-          }
-          if (foundHeader && !line.startsWith("#") && !line.startsWith("*") && !line.startsWith("-") && !line.startsWith(">") && !line.startsWith("`")) {
-            desc = line;
-            break;
+        // 2. 부제가 없을 때만 첫 일반 단락을 한 줄 요약으로 추출
+        if (!desc) {
+          let foundHeader = false;
+          for (let line of lines) {
+            if (line.startsWith("#")) {
+              foundHeader = true;
+              continue;
+            }
+            if (foundHeader && !line.startsWith("#") && !line.startsWith("*") && !line.startsWith("-") && !line.startsWith(">") && !line.startsWith("`") && !line.startsWith("|")) {
+              desc = line;
+              break;
+            }
           }
         }
 
-        // 3. 태그 추출 (**로 강조된 메타 라인 파싱)
-        for (let line of lines) {
-          if (line.startsWith("**") && line.endsWith("**")) {
-            const rawTags = line.replace(/^\*\*|\*\*$/g, "").split(/[·•|]/);
-            tags = rawTags.map(t => t.trim()).filter(t => t.length > 0);
-            break;
+        // 3. 태그 추출 (HTML meta-grid의 핵심 스택 우선, 그 다음 마크다운 표, 마지막으로 ** 볼드 라인)
+        let foundTableStack = false;
+        
+        // A. HTML meta-grid 탐색
+        for (let i = 0; i < lines.length; i++) {
+          if (lines[i].includes("핵심 스택") || lines[i].includes("기술 스택")) {
+            for (let j = i + 1; j <= i + 4 && j < lines.length; j++) {
+              if (lines[j].includes("meta-val")) {
+                const cleanText = lines[j].replace(/<[^>]*>/g, "").trim();
+                const rawTags = cleanText.split(/[\/·•|]/);
+                tags = rawTags.map(t => t.trim()).filter(t => t.length > 0);
+                foundTableStack = true;
+                break;
+              }
+            }
+          }
+          if (foundTableStack) break;
+        }
+
+        // B. 마크다운 표 탐색
+        if (!foundTableStack) {
+          for (let line of lines) {
+            if (line.startsWith("|") && (line.includes("핵심 스택") || line.includes("기술 스택"))) {
+              const cols = line.split("|").map(c => c.trim());
+              if (cols.length >= 3) {
+                const rawTags = cols[2].split(/[\/·•|]/);
+                tags = rawTags.map(t => t.trim()).filter(t => t.length > 0);
+                foundTableStack = true;
+                break;
+              }
+            }
+          }
+        }
+
+        // C. 기존 ** 볼드 라인 탐색
+        if (!foundTableStack) {
+          for (let line of lines) {
+            if (line.startsWith("**") && line.endsWith("**")) {
+              const rawTags = line.replace(/^\*\*|\*\*$/g, "").split(/[\/·•|]/);
+              tags = rawTags.map(t => t.trim()).filter(t => t.length > 0);
+              break;
+            }
           }
         }
 
         // DOM 업데이트
         if (title && titleEl) titleEl.textContent = title;
         if (desc && descEl) {
-          descEl.textContent = desc.length > 85 ? desc.substring(0, 85) + "..." : desc;
+          descEl.textContent = desc;
         }
-        if (tags.length > 0 && tagsEl) {
+        if (tagsEl) {
           tagsEl.innerHTML = "";
-          // 최대 3개 태그 노출
-          tags.slice(0, 3).forEach(tag => {
+          if (tags.length > 0) {
+            tags.slice(0, 3).forEach(tag => {
+              const span = document.createElement("span");
+              span.className = "card-tag";
+              span.textContent = tag;
+              tagsEl.appendChild(span);
+            });
+          } else {
             const span = document.createElement("span");
             span.className = "card-tag";
-            span.textContent = tag;
+            span.textContent = "대기 중";
             tagsEl.appendChild(span);
-          });
+          }
         }
       }
     });

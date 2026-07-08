@@ -1,141 +1,297 @@
-# Chicken Cha Cha — Online Multiplayer Board Game
+# Chicken Cha Cha
+### Photon Fusion 2 기반 3D 온라인 멀티플레이어 보드게임 이식 프로젝트
 
-**Unity (2022.3 LTS) · C# (10.0) · Photon Fusion 2 · 5인 팀 프로젝트 (기술 리드)**
+<!-- link-github: https://github.com/WhiteAppleKo/Chicken-Cha-Cha-Project -->
+<!-- link-video: https://youtube.com/watch?v=SomeVideoUrl -->
 
-본 문서는 전통 메모리 보드게임 '치킨 차차'의 물리 보드판과 실시간 카드 매칭 로직을 온라인 멀티플레이어 환경으로 이식하고, 기술 리드로서 설계한 네트워크 분산 구조 및 협업 워크플로우를 정리한 기술 명세서입니다.
+<div class="meta-grid">
+  <div class="meta-item">
+    <div class="meta-label">제작 인원</div>
+    <div class="meta-val">5인 (팀 프로젝트)</div>
+  </div>
+  <div class="meta-item">
+    <div class="meta-label">개발 기간</div>
+    <div class="meta-val">2025.05.21 - 2025.05.30 (17일)</div>
+  </div>
+  <div class="meta-item">
+    <div class="meta-label">핵심 스택</div>
+    <div class="meta-val">Unity / C# / Photon Fusion 2 / Firebase</div>
+  </div>
+</div>
+
+**Unity · C# · Photon Fusion 2**
 
 ---
 
-## 1. 프로젝트 개요
+## 1. 개요
 
-* **목표**: 룸 환경에서 마스터 클라이언트(방장)의 강제 이탈 시에도 게임 방 세션이 끊기지 않는 고신뢰성 보드게임 환경을 구축하고, 5인 개발진의 코드 품질 및 병렬 개발 생산성을 극대화합니다.
-* **개발 기간**: 2025.05.21 ~ 2025.05.30 (총 17일)
-* **담당 역할**: 기술 리드 (Technical Lead) — 개발 환경 설정, 인터페이스 설계, Photon Fusion 2 연동 및 예외 처리 아키텍처 설계.
+### 1.1. 프로젝트 정의 및 배경
+* **프로젝트 배경**: 전통 보드게임 '치킨 차차'의 규칙을 멀티플레이 환경으로 디지털 이식한 3D 온라인 멀티플레이어 팀 프로젝트입니다.
+* **핵심 구현**: Photon Fusion 2 상태 동기화 기반 턴 제어 시스템 그리고 예기치 않은 네트워크 단절 대응 세션 유지 프레임워크 구축을 구현했습니다.
+* **문서의 기술 범위**: 본 문서는 UI 시스템에 국한되지 않고, 실시간 네트워크 환경에서 방장(Master Client)을 포함한 임의의 플레이어 이탈 시 세션 폭파를 예방하고 중단 없는 플레이를 보장하기 위해 설계된 멀티플레이어 상태 동기화를 소개합니다.
 
----
-
-## 2. 시스템 구조
-
-게임의 수명 주기는 크게 **준비 단계**, **플레이 단계**, **마무리 단계**로 분산 정렬되며, 모든 트랜잭션 흐름은 GameManager 싱글톤 매니저가 제어합니다.
-
+#### 👥 팀원 구성 및 역할
 ```mermaid
-flowchart TD
-    subgraph 준비 단계
-        A["Firebase 로그인/인증"] --> B["메인 로비 진입"]
-        B --> C{"방 생성 또는 참가"}
-        C -->|생성/참가| D["대기실 (Lobby)"]
-        D -->|모든 유저 Ready| E["인게임 씬 로드 (LoadScene)"]
-      end
-
-    subgraph 플레이 단계
-        E --> F["GameManager 싱글톤 생성"]
-        F --> G["턴 순서 배열 정의"]
-        G --> H["현재 턴 플레이어 행동 입력"]
-        H --> I["Photon RPC 동기화"]
-        I --> J{"게임 종료 조건 달성?"}
-        J -->|No| H
-        J -->|Yes| K["결과 화면 표출"]
+flowchart LR
+    subgraph Team ["팀원"]
+        Leader["박승식\n팀장"]
+        TechLead["김우태\n기술 리드"]
+        Member1["남건우\n팀 원"]
+        Member2["유규하\n팀 원"]
+        Member3["문현승\n팀 원"]
     end
     
-    subgraph 마무리 단계
-        K --> L["결과 데이터 저장 (Firebase)"]
-        L --> M["로비 이동 / 게임 세션 종료"]
-    end
+    style Team fill:#F9FAFB,stroke:#E5E7EB,stroke-width:1px
+    style Leader fill:#FFA6FF,stroke:#333,stroke-width:2px
+    style TechLead fill:#B9B9FF,stroke:#333,stroke-width:2px
+    style Member1 fill:#99FF99,stroke:#333,stroke-width:2px
+    style Member2 fill:#99FF99,stroke:#333,stroke-width:2px
+    style Member3 fill:#99FF99,stroke:#333,stroke-width:2px
 ```
-
----
-
-## 3. 기술 리드 및 협업 프로세스 개선
-
-### 3.1. 코드 컨벤션 정립 및 Rider IDE 환경 통일
-프로젝트 초기, 팀원 간의 비표준적 명명 스타일로 인한 병합 충돌과 가독성 문제를 해결하기 위해 Notion에 공용 개발 표준을 명문화 배포하고 Rider 서식 설정을 고정 관리했습니다.
-
-> **김우태 개발자 정립 주요 코딩 표준**:
-> - **클래스 및 구조체**: 파스칼 표기법 (`PascalCase`)
-> - **지역 변수 및 매개 변수**: 카멜 표기법 (`camelCase`)
-> - **private 멤버 필드**: `m_` 접두사 적용 (`m_memberField`)
-> - **불리언(Boolean) 식별자**: `b` 소문자 접두사 적용 (`bIsReady`)
-
----
-
-### 3.2. 인터페이스 기반 병렬 개발 프로세스 (Mock Object 활용)
-* **문제 상황**: 초기 칸반 보드 기획 시 세부 태스크 위주의 결합된 계획 수립으로 인해, 특정 팀원의 구현 완료 시점까지 다른 팀원이 대기하여 개발 병목 및 속도 저하 현상이 발생했습니다.
-* **해결 방안**: 상호 통신할 기능에 대한 public 인터페이스를 최우선 명세화하고 공유했습니다. 이를 통해 기능의 실무 코드가 완성되기 전이라도 **인터페이스 모듈 규격**과 **임시 목 객체(Mock Object)**를 사용해 팀원들이 독립적으로 연계 파트의 개발 및 단독 테스트를 동시 병렬 수행했습니다.
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor 개발자A as 플레이어 구현자
-    participant IF as Interface (명세)
-    actor 개발자B as 게임매니저 구현자
-
-    Note over 개발자A, 개발자B: 1. 협의를 통한 인터페이스 최우선 정의
-    개발자A->>IF: IPlayerActions 인터페이스 설계
-    개발자B->>IF: IGameReferee 인터페이스 설계
-    
-    Note over 개발자A: 2. Mock 객체를 사용한 독립 개발
-    개발자A->>개발자A: MockReferee를 주입받아 플레이어 이동/판정 단독 테스트 완료
-    Note over 개발자B: 3. 상대 구현 상태와 무관하게 병렬 개발
-    개발자B->>개발자B: MockPlayer를 주입받아 턴 제어 로직 구현 완료
-    
-    Note over 개발자A, 개발자B: 4. 실물 컴포넌트 교체 시 통합 문제 없음 확인
-    개발자A->>개발자B: 실물 컴포넌트로 연결 및 최종 통합 통과
-```
-
----
-
-## 4. Photon Fusion 2 네트워크 아키텍처
-
-### 4.1. 공유 모드 (Shared Mode) 선정을 통한 고신뢰성 룸 유지
-소규모 캐주얼 멀티플레이 게임 구현 시 공식 문서에서 권장하는 두 가지 연결 프로토콜 모델을 비교 분석하여 Rationale을 도출했습니다.
-
-| 특징 | 클라이언트 호스트 모드 (Host Mode) | 공유 모드 (Shared Mode) - **선택** |
+### 1.2. 프로젝트 목차
+| 장 번호 | 핵심 주제 | 구현 방식 |
 | :--- | :--- | :--- |
-| **상태 권한 (Authority)** | 호스트 1인에게 서버 및 게임 상태 권한 집중 | 객체 단위로 분산 관리 (State Authority 위임 가능) |
-| **방장(Master) 이탈 시** | 세션이 완전히 폭파되거나 무거운 호스트 마이그레이션 필요 | **방장이 나가도 세션은 유지되며 권한만 타 클라이언트로 즉시 승계** |
-| **구현 난이도** | 클라이언트-서버 간 물리 동기화 최적화 난이도 높음 | 로비 매칭 및 분산 권한 구조 제공으로 빠른 프로토타이핑 가능 |
+| **02. 기술 리드 및 협업 표준화** | 개발 환경 표준화 및 네트워크 토폴로지 선정 | Rider IDE 환경 공유, Shared Mode 선정 및 예외 복구 아키텍처 수립 |
+| **03. 플레이어 이탈 대응** | 실시간 플레이어 세션 이탈 및 마스터 권한 자동 이양 | Shared Master Client Object 상태 복구 아키텍처 및 턴 스킵 로직 구현 |
+| **04. GameManager & RuleManager 분리 설계** | 게임 진행 상태 관리와 룰 유효성 검증의 분리 | SRP(단일책임) 설계를 통한 GameManager 및 RuleManager 컴포넌트 이원화 |
+| **05. 고민과 선택 : 대안 비교 및 결정 근거** | 개발 중 발생한 설계 트레이드오프 분석 | 데이터 패킷 전송 모델, 협업 마일스톤 비교 결정 |
+| **06. 프로젝트 회고** | 성능 검증 및 팀 개발 표준화 성과 | 턴 스킵 및 동기화 안전성 검증 결과 요약 |
 
-* **선정 사유**: 본 보드게임의 특성상 턴 상태 및 점수 동기화의 **연속성 보장**이 핵심이었기 때문에, 마스터 클라이언트 이탈 시에도 게임 방이 파괴되지 않고 다음 유저에게 권한이 부드럽게 양도되는 **공유 모드(Shared Mode)**를 탑재하여 안정성을 보증했습니다.
+### 1.3. 전체 시스템 아키텍처
+플레이어 캐릭터의 이동/입력 모듈과 서버/동기화 관리 모듈이 어떻게 유기적으로 작동하는지 나타내는 아키텍처 다이어그램입니다.
+
+```mermaid
+flowchart LR
+    subgraph LocalClient ["로컬 클라이언트 영역"]
+        Player["PlayerController (이동 및 카드 뒤집기)"]
+    end
+
+    subgraph NetworkSync ["네트워크 동기화 영역"]
+        NetObj["NetworkObject (상태 동기화 변수)"]
+        RPC["Photon RPC (동기화 명령 전송)"]
+    end
+
+    subgraph ServerLogic ["중앙 심판/상태 관리 영역"]
+        GM["GameManager (턴/점수 관리)"]
+        RM["RuleManager (데이터 유효성 검사)"]
+    end
+
+    Player -->|"1. 뒤집기 시도"| RPC
+    RPC -->|"2. 유효성 요청"| GM
+    GM -->|"3. 검사 위임"| RM
+    RM -->|"4. 판정 결과 회신 (성공/실패)"| GM
+    GM -->|"5. 최종 상태 동기화 반영"| NetObj
+    NetObj -.->|"6. 모든 클라이언트 뷰 갱신"| Player
+```
 
 ---
 
-### 4.2. 개별 변수(Networked Properties) 중심 동기화
-* **고려 사항**: 특정 이벤트 데이터 전송 시 커스텀 구조체(Struct)를 정의해 패킷을 교환하려 기획했습니다.
-* **최적화 결정**: 데이터 복잡도와 동기화가 필요한 매개 변수 개수를 실시간 진단한 결과, 불필요한 패킷 바이트 낭비를 방지하고자 Photon의 `[Networked]` 어트리뷰트가 바인딩된 개별 변수 동기화 모델로 단순화 설계하여 대역폭 최적화 및 레이턴시를 대폭 감소시켰습니다.
+## 2. 기술 리드: 협업 표준화 및 토폴로지 결정 (Tech Leadership)
+
+### 2.1. 개발 환경 표준화 (Rider IDE & 코드 컨벤션)
+<div class="image-card-text hover-image" data-image="portfolio/project2/images/2.1-1.png, portfolio/project2/images/2.1-2.png">
+<p>팀 단위 협업 시 발생하는 코드 스타일 격차를 예방하고 개발 가독성을 확보하기 위해 코딩 스탠다드 및 Rider 에디터 설정을 통일했습니다.</p>
+<p>- <strong>코드 스타일 정립</strong>: C# 및 Unity 코딩 규격을 정립(Private 변수 <code>m_</code> 접두사, bool 변수 <code>b</code> 접두사 등)하고 Notion을 활용해 규격 공유.</p>
+<p>- <strong>Rider IDE 환경 공유</strong>: 정적 분석 규칙을 구성한 Rider 설정 파일을 통일 및 배포하여 5인 협업에서 흔히 발생하는 스타일 파편화 원천 차단.</p>
+</div>
+
+### 2.2. Photon Fusion 2 네트워크 토폴로지 선택
+게임 중 일부 플레이어 또는 방장(마스터 클라이언트)이 네트워크 접속 단절로 세션을 이탈하더라도 잔여 클라이언트만으로 중단 없는 인게임을 지속하기 위해 네트워크 토폴로지 모드를 분석했습니다.
+
+| 대안 | 방식 | 장점 | 단점 |
+| :--- | :--- | :--- | :--- |
+| **대안 A: Host Mode** | 공식 문서 권장 소규모 모드 | 상태 권한 일원화에 유리함 | **호스트(마스터) 이탈 시 방이 즉각 폭파되어 게임 세션이 강제 종료됨** |
+| **대안 B: Shared Mode** | 각 클라이언트가 권한을 공유 | **마스터 클라이언트가 게임에서 이탈하더라도 잔여 클라이언트들이 동기화 상태를 유지하며 끊김 없이 진행 가능** | 공유 상태 관리를 위한 네트워크 동기화 설계 난이도 증가 |
+
+> **결정: 대안 B (Shared Mode) 채택**
+> 
+> 마스터 클라이언트(호스트)가 비정상 이탈하더라도 세션이 강제 폭파되지 않고, 남은 플레이어들만으로 게임 동기화를 유지하며 중단 없이 인게임을 지속하기 위해 대안 B를 최종 채택했습니다.
 
 ---
 
-## 5. 인게임 시스템 및 플레이어 이탈 예외 제어
+## 3. 플레이어 이탈 대응 아키텍처 (Network Session Handling)
 
-### 5.1. GameManager와 RuleManager(심판)의 책임 디커플링
-GameManager 싱글톤에 턴 스택 관리와 규칙 정합성 판단 로직이 모놀리식(Monolithic)하게 응집되는 구조를 방지하기 위해 역할을 디커플링 분리했습니다.
+### 3.1. Shared Master Client Object 기반 세션 보존
+마스터 클라이언트(방장)가 게임 룸에서 돌발 이탈하더라도 잔여 인원만으로 끊김 없는 플레이를 지속하기 위해, 마스터 권한 소실 시 즉각 다음 생존 마스터에게 게임 상태가 자동 이양되는 **공유 모드(Shared Mode)**를 프로젝트 핵심 구조로 선정했습니다.
 
-* **GameManager (싱글톤 매니저)**: 씬 이동 생명주기 관리, 플레이어 배열 데이터 동기화, UI 표출 및 턴 소유권 이전 흐름 관리.
-* **RuleManager (규칙 검사기)**: 플레이어 액션(카드 매칭)의 정합성 유효성 검사만을 수행하는 고유 규칙 판정 컴포넌트. GameManager의 서브 컴포넌트로 부착되어 심판 역할을 전문 대행합니다.
+```mermaid
+flowchart LR
+    Start([방장 이탈 감지]) --> CheckMaster{마스터 소유권 이전}
+    CheckMaster -->|"자동 이양"| NextMaster[다음 순번 생존 플레이어로 호스트 승격]
+    NextMaster --> GetObject[Shared Master Client Object 권한 획득]
+    GetObject --> SyncGame[GameManager of 턴 루프 및 점수 데이터 동기화 유지]
+```
 
----
-
-### 5.2. 실시간 플레이어 이탈 방어 로직 (턴 승계 안전망)
-멀티플레이 진행 도중 예기치 못한 세션 단절(네트워크 불량 등)로 플레이어가 퇴장할 경우를 대비하여 아래와 같이 상태 복구 시퀀스를 구현했습니다.
+### 3.2. 이탈자 처리 및 턴 자동 스킵 구현
+<div class="image-card-text hover-image" data-image="portfolio/project2/images/3.2-1.png, portfolio/project2/images/3.2-2.png">
+플레이어가 네트워크 단절로 이탈하면, <code>IPlayerLeft</code> 콜백을 수신하여 해당 플레이어 캐릭터를 유령 상태로 비주얼 소거하고, 활성 턴 대상에서 제외해 대기 없이 게임을 지속시키는 구조를 설계했습니다.
+</div>
 
 ```csharp
-// GameManager.cs 내 플레이어 이탈 감지 시 콜백 핸들러
-public override void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
+// NetworkPlayer.cs - 이탈 감지 및 턴 스킵 처리
+public void PlayerLeft(PlayerRef player)
 {
-    // 1. 이탈한 플레이어의 캐릭터를 찾아 반투명 머티리얼로 시각 변경 처리
-    var leftPlayerObj = GetPlayerObject(player);
-    leftPlayerObj.SetTransparentMode(true);
-
-    // 2. 턴 스택 제어 리스트에서 해당 플레이어를 완전히 배제
-    m_activePlayers.Remove(player);
-
-    // 3. 만약 이탈한 유저가 '현재 턴을 소유하고 진행 중인 플레이어'였을 경우
-    if (m_currentTurnPlayer == player)
+    1. 이탈한 플레이어의 네트워크 오브젝트와 컴포넌트 정보 검색
+    var leftPlayer = Runner.GetPlayerObject(player).GetComponent<NetworkPlayer>();
+    
+    2. 세션 동기화에서 해당 플레이어 이탈 상태 플래그를 **true로 즉시 활성화**
+    leftPlayer.bHasLeft = true;
+    
+    3. 비주얼 소거: 플레이어 셰이더를 유령(soulShader)으로 변경하고 반투명 처리
+    leftPlayer.mRenderer.material.shader = BoardManager.Instance.soulShader;
+    leftPlayer.mRenderer.material.color = new Color(0.3f, 0.3f, 0.3f, 0.8f);
+    
+    4. 이탈 상태 애니메이션(앉아서 대기하는 잠자기 모션)을 네트워크 전체에 재생 명령
+    leftPlayer.RPC_PlayAnimation(EChickenAnimation.Left);
+    
+    5. 이탈한 플레이어가 현재 **액티브 턴 플레이어**인지 검사
+    if (GameManager.Instance.IsActivePlayer(player))
     {
-        // 턴 중단 및 즉시 턴 인덱스를 다음 살아있는 플레이어에게 강제 이탈 위임
-        ForcePassNextTurn();
+        6. 방장(StateAuthority)에게 해당 플레이어의 **턴 강제 이양(MoveTurn) RPC 요청**
+        RPC_LeftPlayer();
     }
 }
 ```
 
-* **턴 표시 피드백**: 현재 활성화된 턴 소유자의 UI 프레임을 강조 표시하고, 월드 상의 캐릭터 발밑에 노란색 턴 원형 링(Turn Indicator Indicator)을 동적으로 점등시켜 플레이 가독성을 증대시켰습니다.
+```csharp
+// GameManager.cs - 턴 관리 및 이탈자 건너뛰기
+public void MoveTurn()
+{
+    1. 이전 플레이어의 이동 권한 회수 처리
+    ActivePlayer.RPC_ReceiveMovePermission(false);
+    
+    2. 다음 턴의 플레이어로 기본 인덱스 갱신
+    ActivePlayer = players[(ActivePlayer.Index + 1) % playerCount];
+    
+    3. 네트워크 상에서 나간 플레이어(bHasLeft = true)가 아닐 때까지 **턴을 무한 스킵 연산**
+    while (ActivePlayer.bHasLeft)
+    {
+        ActivePlayer = players[(ActivePlayer.Index + 1) % playerCount];
+    }
+    
+    4. 다음 생존 플레이어에게 **인게임 이동 권한 부여**
+    ActivePlayer.RPC_ReceiveMovePermission(true);
+}
+```
+
+---
+
+## 4. GameManager & RuleManager 분리 설계 (SRP)
+
+### 4.1. 의존성 분리 및 역할 위임
+단일 매니저 클래스에 진행 통제와 룰 판정 책임이 혼재될 경우 발생하는 코드 비대화를 차단하고자, 진행을 담당하는 **GameManager**와 유효성을 전담 판정하는 **RuleManager** 컴포넌트로 분리 설계하여 결합도를 낮췄습니다.
+
+```mermaid
+sequenceDiagram
+    participant P as 플레이어 입력
+    participant GM as GameManager (진행자)
+    participant RM as RuleManager (심판)
+    participant GS as 현재 게임 상태
+
+    P->>GM: 1. 행동 요청 (예: 특정 위치로 말 이동)
+    GM->>RM: 2. 규칙 확인 요청 ("이 행동, 규칙상 괜찮아?")
+    RM->>GS: 3. 현재 게임 상태 정보 조회
+    RM->>RM: 4. 게임 규칙에 따라 요청된 행동의 유효성 검사
+    RM-->>GM: 5. 검사 결과 반환 (True: 유효함 / False: 규칙 위반)
+    
+    alt 유효한 행동일 경우
+        GM->>GM: 6a. 게임 상태 변경 및 행동 실행
+    else 규칙 위반일 경우
+        GM-->>P: 6b. 행동 불가 알림 (UI 표시 등)
+    end
+```
+
+### 4.2. 핵심 규칙 검증 및 매칭 처리
+플레이어가 뒤집은 타일의 유효성을 실시간 판정하고 승리 상태를 검증하는 코드 스펙입니다.
+
+```csharp
+// RuleManager.cs - 타일 일치 유효성 검사
+public bool OpenTile(SteppingTile tile, SelectingTile selectTileInfo)
+{
+    1. 다음 이동할 타일 뒤의 사진과 플레이어가 뒤집어 선택한 타일의 사진이 일치하는지 비교
+    if (tile.Next.IsSamePicture(selectTileInfo))
+    {
+        return true;
+    }
+    return false;
+}
+```
+
+```csharp
+// GameManager.cs - 타일 매칭 결과 및 꼬리/모자 뺏기 동기화
+public bool OpenTile(SteppingTile tile, SelectingTile selectTileInfo)
+{
+    1. 뒤집은 타일의 그림 정보가 다음 타일과 일치하는지 심판 검사 실행
+    if (tile.IsSamePicture(selectTileInfo))
+    {
+        2. 성공 결과에 따라 액티브 플레이어 추가 동작 보장 동기화
+        RPC_OpenTileResult(true);
+        var takeCount = 0;
+        
+        3. 밟은 타일에 다른 플레이어들이 서 있는 경우 **꼬리 및 모자 수집 루프**
+        foreach (var netplayers in mTailPlayers)
+        {
+            takeCount += netplayers.ScoreCount;
+            for (int i = 0; i < netplayers.activeHatNumber.Count; i++)
+            {
+                mActiveHatNumber.Add(netplayers.activeHatNumber[i]);
+            }
+            netplayers.RPC_ResetHat();
+            RPC_ResetTails(netplayers);
+        }
+        
+        4. 수집된 꼬리와 모자 정보를 **액티브 플레이어에게 최종 대입**
+        TakeHats(Runner.LocalPlayer, mActiveHatNumber);
+        TakeTails(Runner.LocalPlayer, takeCount);
+        mActiveHatNumber = new List<int>();
+        mTailPlayers = new List<NetworkPlayer>();
+        return true;
+    }
+    mTailPlayers = new List<NetworkPlayer>();
+    
+    5. 오답인 경우 RPC 오답 처리 및 턴 넘기기 동작 위임
+    RPC_OpenTileResult(false);
+    return false;
+}
+```
+
+---
+
+## 5. 고민과 선택 : 대안 비교 및 결정 근거
+
+### 5.1. 데이터 동기화 패킷 전송 모델
+실시간 보드 타일 매칭 이벤트 전송 시 대역폭 오버헤드를 최적화하기 위한 비교입니다.
+
+| 대안 | 방식 | 장점 | 단점 |
+| :--- | :--- | :--- | :--- |
+| **대안 A: 구조체(Struct) 일괄 전송** | 연관된 모든 상태(선택 타일 정보, 턴, 모자 목록 등)를 단일 구조체 패킷으로 래핑하여 송수신 | 일괄 통신으로 수신 측 파싱 처리가 간편함 | 데이터 모델 변경 시 패킷 마이그레이션 복잡성이 높고, 미사용 데이터 전송으로 인한 불필요 패킷 오버헤드 유발 |
+| **대안 B: 원시 변수(Primitive) 개별 전송** | 타일 인덱스, 꼬리 개수 등 개별 원시 데이터 변수들을 필요 시점에 독립 동기화 | 꼭 필요한 데이터만 핀포인트로 전송하여 트래픽 오버헤드 최소화 | 데이터 구조 다양화 시 동기화해야 할 변수 관찰 지점(OnChangedRender) 개수가 다수 늘어남 |
+
+> **결정: 대안 B (원시 변수 개별 전송) 채택**
+> 
+> 프로젝트 사양 검토 결과 **동기화할 공유 데이터의 구조가 복잡하지 않고 원시 타입 범위 내에서 충분히 해결 가능**함을 확인하여, 네트워크 트래픽 오버헤드를 원천 방지하고 동기화 갱신 시점을 세밀하게 제어하기 위해 대안 B를 채택했습니다.
+
+### 5.2. 협업 아키텍처 마일스톤 설계
+팀 프로젝트 초기 빌드 시 상호 개발 병목을 예방하기 위한 프로세스 선택입니다.
+
+| 대안 | 방식 | 장점 | 단점 |
+| :--- | :--- | :--- | :--- |
+| **대안 A: 세분화된 칸반 마일스톤 계획** | 초기 기획 단계에서 모든 기능 단위 일정을 세밀하게 칸반 태스크로 분할하여 전개 | 예측 일관성이 높고 마일스톤 일정 산출이 용이함 | 세세한 계획으로 인해 개발 자율성이 저하되고, 특정 파트 일정 딜레이 발생 시 연동된 타 파트 개발 전체가 병목 상태에 빠짐 |
+| **대안 B: 인터페이스 명세화 기반 분할 협업** | public 상호작용 속성을 인터페이스로 최우선 문서화하고, 실제 기능 완성 전에 Mock 객체로 병렬 개발 수행 | 타 파트의 실제 구현 완료 시점을 기다릴 필요 없이 독립적인 개발 및 모의 테스트가 가능하여 병목 해소 | 협업 초기 단계에서 상호 규격 조율 및 인터페이스 문서 설계 공수 추가 소요 |
+
+> **결정: 대안 B (인터페이스 명세화 기반 분할 협업) 채택**
+> 
+> 초기 명세화 작업에 따르는 **설계 소요 시간**을 감수하고서라도, 5인 팀원 간의 결합성 병목을 원천 방지하여 **전체 개발 속도를 비약적으로 확보하고 병렬적인 독립 테스트 환경을 실현**하기 위해 대안 B를 채택했습니다.
+
+---
+
+## 6. 프로젝트 회고
+
+### 6.1. 성과 및 검증
+* **세션 이양 복구 동작 확인**: 방장(Master Client)의 강제 접속 해제 테스트 진행 시, 네트워크가 멈추지 않고 차순위 생존 클라이언트로 방장 지위 및 `Shared Master Client Object` 소유권이 끊김 없이 매끄럽게 인계됨을 확인했습니다.
+* **개발 환경 표준화**: Rider IDE 설정 통일 및 C# 코드 스타일/코딩 컨벤션 공유를 통해 5인 협업에서 흔히 발생하는 스타일 및 환경 파편화 분쟁을 개발 초기 단계에서 차단했습니다.
+
+### 6.2. 회고
+* **달성한 성과 (✓)**:
+  * 5인 팀 프로젝트의 기술 리드로서 인터페이스 명세 기반 분할 작업 프로세스를 성공적으로 정착시켜 완성도 높은 병렬 개발 완수.
+  * Shared Mode 이점 극대화를 통한 방장 탈퇴 예외 복구 아키텍처 실현.

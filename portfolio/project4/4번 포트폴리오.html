@@ -13,7 +13,24 @@
   <!-- Highlight.js GitHub Dark CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
   <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/highlight.min.js"></script>
-  <script>hljs.highlightAll();</script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      document.querySelectorAll("pre code").forEach(block => {
+        // 1. 사전 텍스트 마킹
+        let text = block.textContent;
+        text = text.replace(/\*\*(.*?)\*\*/g, 'STSTART$1STEND');
+        block.textContent = text;
+
+        // 2. 동기식 개별 블록 하이라이트 실행
+        hljs.highlightElement(block);
+
+        // 3. 사후 HTML 태그 최종 복원
+        let html = block.innerHTML;
+        html = html.replace(/STSTART/g, '<strong>').replace(/STEND/g, '</strong>');
+        block.innerHTML = html;
+      });
+    });
+  </script>
 
   <style>
     :root {
@@ -28,6 +45,11 @@
       --accent: #D97706;
       --font-outfit: 'Outfit', 'Noto Sans KR', sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
+
+      /* 코드 카드 전용 다크 토큰 */
+      --code-bg: #0d1117;
+      --code-border: #30363d;
+      --code-shadow: rgba(0, 0, 0, 0.15);
     }
 
     * {
@@ -56,6 +78,23 @@
       border-bottom: 1px solid var(--card-border);
       padding-bottom: 30px;
       margin-bottom: 50px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .header-left {
+      flex: 1;
+      min-width: 300px;
+    }
+
+    .header-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 15px;
     }
 
     .back-btn {
@@ -104,31 +143,51 @@
     }
 
     .meta-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
-      margin-top: 24px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
     }
 
     .meta-item {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 12px;
-      padding: 16px;
+      padding: 10px 16px;
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04);
     }
 
     .meta-label {
-      font-size: 0.75rem;
+      font-size: 0.65rem;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
 
     .meta-val {
       font-weight: 600;
-      font-size: 0.95rem;
+      font-size: 0.85rem;
+    }
+
+    .pdf-btn {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 16px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      color: #FFF;
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      box-shadow: 0 4px 15px var(--primary-glow);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .pdf-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
+      border-color: rgba(255, 255, 255, 0.2);
     }
 
     /* ── 본문 콘텐츠 ── */
@@ -177,18 +236,29 @@
 
     /* 코드 블록 스타일 */
     pre {
-      background: #F9FAFB;
-      border: 1px solid var(--card-border);
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
       border-radius: 12px;
       padding: 18px;
       margin: 20px 0;
       overflow-x: auto;
+      box-shadow: 0 10px 30px var(--code-shadow);
     }
 
     code {
       font-family: var(--font-mono);
       font-size: 0.85rem;
-      color: #1F2937;
+      color: #c9d1d9;
+    }
+
+    /* 다크 코드 블록 내의 주석 및 특정 강조 요소 형광 하이라이트 */
+    pre code strong,
+    pre code b,
+    pre code span strong,
+    pre code .hljs-comment strong {
+      color: #ffca28 !important;
+      font-weight: 700 !important;
+      text-shadow: 0 0 8px rgba(255, 202, 40, 0.4);
     }
 
     /* 텍스트 내 단일 코드 */
@@ -243,28 +313,41 @@
   <div class="wrap">
     
     <header>
-      <a href="../viewer.html#4" class="back-btn">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="19" y1="12" x2="5" y2="12"></line>
-          <polyline points="12 19 5 12 12 5"></polyline>
-        </svg>
-        문서 뷰어로 돌아가기
-      </a>
-      <div class="project-category">2D Vector Action · Project #04</div>
-      <h1>뱀서라이크 기술 사양서</h1>
+      <div class="header-left">
+        <a href="../viewer.html#4" class="back-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          문서 뷰어로 돌아가기
+        </a>
+        <div class="project-category">2D Vector Action · Project #04</div>
+        <h1>뱀서라이크 기술 사양서</h1>
+      </div>
       
-      <div class="meta-grid">
-        <div class="meta-item">
-          <div class="meta-label">제작 인원</div>
-          <div class="meta-val">1인 (개인 프로젝트)</div>
-        </div>
-        <div class="meta-item">
-          <div class="meta-label">개발 기간</div>
-          <div class="meta-val">2025.12 - 2026.02</div>
-        </div>
-        <div class="meta-item">
-          <div class="meta-label">엔진 및 도구</div>
-          <div class="meta-val">Unity 6000.3.8f1 / Shapes Asset</div>
+      <div class="header-right">
+        <a href="뱀서라이크.pdf" download="뱀서라이크_기술사양서.pdf" class="pdf-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:6px;">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          📄 PDF로 다운로드
+        </a>
+        
+        <div class="meta-grid">
+          <div class="meta-item">
+            <div class="meta-label">제작 인원</div>
+            <div class="meta-val">1인 (개인 프로젝트)</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">개발 기간</div>
+            <div class="meta-val">2025.12 - 2026.02</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">엔진 및 도구</div>
+            <div class="meta-val">Unity 6000.3.8f1 / Shapes Asset</div>
+          </div>
         </div>
       </div>
     </header>
@@ -300,7 +383,7 @@ private Vector3Int OffsetToCube(int col, int row)
 {
     var q = col - (row - (row & 1)) / 2;
     var r = row;
-    return new Vector3Int(q, -q - r, r); // q + r + s = 0 공식 적용
+    return new Vector3Int(q, -q - r, r); // **핵심 R&D** q + r + s = 0 공식 적용
 }
 
 // 3D 월드 상의 좌표를 지그재그 홀수/짝수 보정 연산을 통해 가장 가까운 육각 큐브 셀로 변환
@@ -318,7 +401,7 @@ public Vector3Int WorldToCube(Vector3 worldPos)
         <blockquote>
           <strong>맨해튼 거리 공식 (GetHexDistance)</strong><br>
           무거운 제곱근 및 삼각함수 연산을 완전히 배제하고 정수 합산 및 비트 나눗셈 연산만으로 최단 격자 거리를 빠르게 가져옵니다.<br>
-          <code>Distance = (Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y) + Mathf.Abs(a.z - b.z)) / 2;</code>
+          <code>Distance = (Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y) + Mathf.Abs(a.z - b.z)) / 2; // **임계 거리 판정**</code>
         </blockquote>
       </section>
 
@@ -333,7 +416,7 @@ public List&lt;Collider&gt; ScanTargets(Vector3 centerPos, int range, LayerMask 
     // 1단계: Physics.OverlapSphere로 가상의 넓은 후보군을 1차 고속 검출
     float hexWidth = Mathf.Sqrt(3f) * hexRadius;
     float searchRadius = (hexWidth * range) + hexWidth;
-    Collider[] hits = Physics.OverlapSphere(centerPos, searchRadius, targetLayer);
+    Collider[] hits = Physics.OverlapSphere(centerPos, searchRadius, targetLayer); // **1단계: 물리 탐색**
     
     Vector3Int centerCube = WorldToCube(centerPos);
     
@@ -341,7 +424,7 @@ public List&lt;Collider&gt; ScanTargets(Vector3 centerPos, int range, LayerMask 
     foreach (var hit in hits)
     {
         Vector3Int hitCube = WorldToCube(hit.transform.position);
-        if (GetHexDistance(centerCube, hitCube) &lt;= range)
+        if (GetHexDistance(centerCube, hitCube) <= range) // **2단계: 정밀 필터링**
         {
             validTargets.Add(hit);
         }
@@ -370,7 +453,7 @@ public List&lt;Collider&gt; ScanTargets(Vector3 centerPos, int range, LayerMask 
         <p>무기의 원본 SO 데이터(PureData) 훼손을 막고, 런타임 개별 버프(Local) 및 전역 버프(Global)를 계층 합산하여 실시간 스탯을 산출하고 이벤트를 호출합니다.</p>
         <pre><code class="language-csharp">// RecalculateStats 스탯 산출 처리 예시
 float totalSpeedMultiplier = Mathf.Max(0.1f, m_attackDelayMultiplier + m_globalAttackDelayModifier);
-FinalAttackDelay = Mathf.Max(0.05f, PureData.AttackDelay / totalSpeedMultiplier);
+FinalAttackDelay = Mathf.Max(0.05f, PureData.AttackDelay / totalSpeedMultiplier); // **딜레이값 도출**
 
 FinalDamage = (int)((PureData.Damage + m_damageAdded + m_globalDamageAdded) * 
               (m_damageMultiplier + m_globalDamageMultiplier));

@@ -1,167 +1,506 @@
-# Portal Lab — 3D Portal System & Physics
+# Portal Lab
+### 유니티 엔진 기반 포탈 물리 메커니즘 및 렌더링 최적화 3D 구현 프로젝트
 
-**Unity (2022.3 LTS) · C# (10.0) · 3D 개인 모작 프로젝트**
+<!-- link-github: https://github.com/WhiteAppleKo/3D-Portal-Project -->
+<!-- link-video: https://youtube.com/watch?v=xeFMcETvBb4&feature=youtu.be -->
 
-본 문서는 명작 퍼즐 게임 '포탈(Portal)'의 핵심 공간 이동 물리 아키텍처, 실시간 시점 렌더링, 셰이더 그래픽 클론 마스킹 및 물리 퍼즐 기믹을 구현하고 최적화한 기술 명세서입니다.
+<div class="meta-grid">
+  <div class="meta-item">
+    <div class="meta-label">제작 인원</div>
+    <div class="meta-val">1인 (개인 프로젝트)</div>
+  </div>
+  <div class="meta-item">
+    <div class="meta-label">개발 기간</div>
+    <div class="meta-val">2025.04.13 - 2025.04.30 (18일)</div>
+  </div>
+  <div class="meta-item">
+    <div class="meta-label">핵심 스택</div>
+    <div class="meta-val">Unity / C# / Matrix4x4 / Shader / IK</div>
+  </div>
+</div>
 
----
+## 1. 개요
 
-## 1. 프로젝트 개요
+### 1.1. 프로젝트 정의 및 배경
+* **프로젝트 배경**: 원작 포탈의 기하학적 공간 이동 연출을 Unity 엔진 환경에서 완벽하게 재현하기 위해 진행한 R&D 모작 프로젝트입니다.
+* **핵심 기능**: 기존 트리거 충돌체 기반 순간이동의 프레임 단절 결함과 카메라 오프셋 회전 시의 시각 왜곡 결함을 벡터 내적 판정 및 Matrix4x4 회전 변환 행렬을 주입하여 심리스한 연출로 극복했습니다.
+* **문서의 기술 범위**: 본 문서는 특정 핵심 기믹에 국한되지 않고, 조준 IK 제어, 순간이동 물리, 거울 시점 렌더링 최적화 및 씬 전환을 포함하는 프로젝트 전체 아키텍처 사양을 포괄하여 소개합니다.
 
-* **목표**: 단순 순간이동을 넘어, 물체가 포탈 게이트에 물리적으로 자연스럽게 걸쳐지는 통과 연출과 실시간 렌더링 시점 동기화를 구현하고 성능 병목을 최소화합니다.
-* **개발 범위**: 캐릭터 IK(역운동학) 조준 제어, 내적 기반 텔레포트 판정, Matrix4x4 변환 행렬 기반 뷰 동기화, Frustum Culling 최적화, 픽셀 셰이더 클리핑 단면 처리.
+<br>
 
-> **핵심 설계 지표**:
-> - **의존성 결합 해제**: 플레이어에 묶여 있던 텔레포트 책임을 범용 컴포넌트(`PortalTraveler`)로 분리하여 큐브 등 모든 리지드바디 물체에 일관 적용 가능하도록 리팩토링.
-> - **렌더링 드로우콜 최적화**: 보이지 않는 포탈 건너편 카메라의 불필요한 연산을 시야 선별(Frustum Culling) 공식을 사용해 원천 차단.
+### 1.2. 프로젝트 목차
+| 장 번호              | 핵심 주제                  | 구현 방식                                             |
+|:------------------|:-----------------------|:--------------------------------------------------|
+| **02. 플레이어 움직임**  | 역운동학 기반 조준선 상체 회전 보정   | FinalIK에셋을 활용한 조준점 갱신                             |
+| **03. 포탈 동작 로직**  | 공간 통과 판정 및 운동 보존   | 벡터 내적 부호 교차 감지 및 운동 보존                            |
+| **04. 포탈 렌더링 로직** | 거울형 시각 대칭 동기화 및 최적화    | 포탈의 시각적 대칭 및 최적화                                  |
+| **05. 고민과 선택 : 대안 비교 및 결정 근거**    | 개발 고민 및 대안 비교 결정       | 포탈 통과 로직, 카메라 위치 동기화 알고리즘, 컴포넌트 의존성 비교            |
+| **06. 퍼즐 기믹**     | 포탈 경유 연쇄 기믹 | 연쇄 가교, 발밑 바닥 픽셀 해독                       |
+| **07. 프로젝트 회고**   | 성능 검증 및 회고, 기술 부채      | 최적화 성과 분석 및 고속 낙하 터널링 물리 결함 개선 계획 |
 
----
+<br>
 
-## 2. 시스템 아키텍처
-
-포탈 시스템의 구성 모듈은 카메라 렌더링 조율부(`MainCamera`), 물리 게이트 객체(`Portal`), 통과 가능 대상 추상 인터페이스(`PortalTraveler`), 조준점 제어기(`AimController`)로 디커플링되어 유기적으로 맞물려 동작합니다.
+### 1.3. 전체 시스템 아키텍처
+플레이어 캐릭터의 조준선 제어 모듈과 포탈 물리/렌더링 동기화 모듈이 서로 유기적으로 작동하는 전체 구조도입니다.
 
 ```mermaid
-flowchart TD
-    subgraph PlayerSystem
-        UI["UserInput (Keyboard/Mouse)"] -->|"Look/Aim"| Aim["AimController"]
-        Aim -->|"targetPos"| IK["AimIK (골격 회정 보정)"]
-        IK -->|"weight"| Anim["Animator (SetIKPosition)"]
+flowchart LR
+    subgraph PlayerController ["플레이어 컨트롤러"]
+        Input["사용자 입력 키보드/마우스"]
+        Player["플레이어 이동, 카메라, 상호작용"]
+        Input --> Player
     end
 
-    subgraph PortalSystem
-        MGR["MainCamera (LateUpdate 렌더러)"] -->|"Render()"| P["Portal (포탈 물리/렌더 게이트)"]
-        P -->|"linkedPortal"| P2["Portal (출구 포탈)"]
-        PT["PortalTraveler (범용 통과 컴포넌트)"] -->|"Teleport()"| P
-        PT -.->|"graphicsClone"| P2
+    subgraph PortalSystem ["핵심 포탈 시스템"]
+        PortalGun["포탈건"]
+        Portal["포탈 렌더링 및 텔레포트"]
     end
+
+    subgraph PuzzleGimmick ["퍼즐 기믹"]
+        Gimmicks["버튼, 다리, 페인트볼, 도착지점 등"]
+    end
+
+    World["게임 월드 벽, 큐브, 각종 오브젝트"]
+
+    Input -->|좌클릭/우클릭| PortalGun
+    Player -->|물리적 상호작용| World
+    Player -->|포탈 통과| Portal
+    Player -->|기믹 활성화| Gimmicks
+    PortalGun -->|포탈 생성| World
+    Gimmicks -->|"월드에 영향 (다리 생성 등)"| World
 ```
 
 ---
 
-## 3. 핵심 기술 구현
+## 2. 플레이어 움직임
 
-### 3.1. Inverse Kinematics (IK) 조준 시스템
-포탈을 통과하여 비치는 플레이어의 모습이 조준점 위치에 따라 유연하게 상체가 보정되도록 역운동학을 적용했습니다.
+### 2.1. 원작 분석 및 구현 목표
 
-* **AimController**: 마우스 조준에 따라 월드 공간 상에 가상의 목표물(`aimTarget`) 트랜스폼을 위치시키고 좌표를 갱신합니다.
-* **AimIK**: 유니티 `OnAnimatorIK()` 콜백을 수신하여 지정된 상체 골격 체인들의 회전 가중치(`weight`)를 조준점에 맞춰 동기적으로 보정 제어합니다.
+<div class="image-card-text hover-image" data-image="portfolio/project1/images/page_9_img_4.png">
+  <p>원작 포탈에서는 플레이어의 포탈건 조준선 높낮이에 따라 캐릭터의 상체가 자연스럽게 회전하고 움직이는 연출을 보여줍니다.</p>
+<p>본 모작 구현에서도 포탈을 통해 실시간으로 비치는 플레이어의 모습이 조준점 위치에 대응하여 유연하게 <strong>동적 상체 보정</strong>이 이루어지도록 <strong>역운동학(IK)</strong>을 적용하여, 플레이어 조준 각도에 맞춰 상체 회전과 자세 변화가 유기적으로 보정되는 시각 피드백 확보를 최종 구현 목표로 설정했습니다.</p>
+</div>
+
+```mermaid
+flowchart LR
+    A[마우스 움직임 감지] --> B[AimController: 목표 지점 산출 및 AimIK 공유]
+    B --> C[AimIK: 정해진 목표 지점에 따른 골격 실시간 제어]
+```
+
+### 2.2. AimIK 시스템 아키텍처 및 구현 결과
+* **Aim Controller**: 마우스 조준 트래킹에 따라 가상의 월드 조준점(`aimTarget`) 정보를 갱신하고 AimIK와 연동합니다.
+* **AimIK**: 인스펙터 상에서 실시간 제어 대상을 정밀 제어하기 위해 골격을 직접 추가하거나 제거할 수 있으며, Aim Controller에서 전달받은 목표 지점에 맞춰 골격의 상체 회전을 실시간 제어 보정합니다.
+
+  <div>
+    <p style="text-align: center; font-weight: bold; margin-bottom: 8px;">AimIK 클래스 의존 관계도</p>
+
+```mermaid
+classDiagram
+direction LR
+    class UserInput {
+        <<System>>
+        +getMousePosition() : Vector2
+    }
+    class Player {
+        +GameObject
+    }
+    class AimController {
+        <<Component>>
+        +Transform aimTarget
+        +float mouseSensitivity
+        +UpdateAimTarget() : void
+    }
+    class AimIK {
+        <<Component>>
+        +float weight
+        -OnAnimatorIK() : void
+    }
+    class Animator {
+        <<Component>>
+        +SetIKPosition()
+        +SetIKWeight()
+    }
+
+    UserInput --> AimController : "마우스 입력 제공"
+    AimController --> AimIK : "조준 목표(Target) 제공"
+    AimIK --> Animator : "IK 가중치 및 목표 설정"
+    Player *-- AimController
+    Player *-- AimIK
+    Player *-- Animator
+```
+  </div>
 
 ---
 
-### 3.2. 내적(Dot Product) 기반 텔레포트 물리 판정
-단순 콜라이더 충돌(Trigger Enter)은 순간이동 시 뚝뚝 끊기는 부자연스러운 프레임 끊김 현상을 유발합니다. 이를 보완하기 위해 포탈 평면의 법선 벡터(Forward)와 물체 위치 오프셋의 **내적 연산 부호 변화**를 프레임마다 체크하여 경계를 통과하는 찰나를 판정합니다.
+## 3. 포탈 동작 로직
+
+### 3.1. 내적 기반 물리 통과 판정
+
+
+
+<div class="image-card-text hover-image" data-image="portfolio/project1/images/video/3.1-1.mp4, portfolio/project1/images/video/3.1-2.mp4">
+  <p>물체의 이전 프레임 오프셋 내적 결과와 현재 프레임 내적 결과의 <strong>부호 변화</strong>를 연속적으로 대조해 <strong>경계 통과 시점</strong>을 프레임 유실 없이 판정합니다.</p>
+<p>기존의 트리거 충돌 판정 대비 성능 과부하가 없으며 매끄러운 통과 연출을 보장합니다.</p>
+</div>
 
 ```csharp
-// 포탈 통과 여부 매 프레임 판정 루틴
-Vector3 offsetFromPortal = travelerT.position - transform.position;
-int portalSide = System.Math.Sign(Vector3.Dot(offsetFromPortal, transform.forward));
-int portalSideOld = System.Math.Sign(Vector3.Dot(traveler.previousOffsetFromPortal, transform.forward));
+1. 포탈 중심에서 여행자까지의 '상대적 위치 벡터' 계산
+Vector3 offsetFromPortal = travellerT.position - transform.position;
 
-// 이전 프레임과 현재 프레임의 부호가 달라진 경우 평면 통과(Cross)로 인지
-if (portalSide != portalSideOld)
-{
-    var positionOld = travelerT.position;
-    var rotOld = travelerT.rotation;
+2. 현재 프레임에서 여행자가 **포탈의 앞(1)에 있는지 뒤(-1)**에 있는지 내적으로 판정
+int portalSide = System.Math.Sign (Vector3.Dot (offsetFromPortal, transform.forward));
+
+3. 이전 프레임에서의 포탈 기준 상대 위치(앞/뒤) 가져오기
+int portalSideOld = System.Math.Sign (Vector3.Dot (traveller.previousOffsetFromPortal, transform.forward));
+
+4. 포탈 **통과 판정** 조건문
+if (portalSide != portalSideOld) {
     
-    // 출구 포탈(linkedPortal)의 좌표계 공간으로 텔레포트 연산 호출
-    traveler.Teleport(transform, linkedPortal.transform, m.GetColumn(3), m.rotation);
+ 5. 텔레포트 직전의 원본 위치와 회전값 임시 저장 
+    var positionOld = travellerT.position;
+    var rotOld = travellerT.rotation;
+    
+ 6. 연결된 반대편 포탈로 실제 좌표 및 회전 변환(순간이동) 수행
+    traveller.Teleport(transform, linkedPortal.transform, m.GetColumn(3), m.rotation);
+
+ 7. **그래픽 클론(분신)**의 위치를 순간이동 전 원본 위치로 재배치
+    traveller.graphicsClone.transform.SetPositionAndRotation(positionOld, rotOld);
+    
+ 8. 도착한 반대편 포탈에 여행자가 진입했음을 알림
+    linkedPortal.OnTravellerEnterPortal(traveller);
+    
+9. 현재 포탈의 추적 대상 리스트에서 제거 
+    trackedTravellers.RemoveAt(i);
+    i--;
 }
 ```
 
-* **결과**: 결합도를 해소하여 `Portal`은 `PortalTraveler` 컴포넌트 유무만을 판단하며, 플레이어뿐만 아니라 상자, 공 등 다양한 물리 개체가 동일한 로직으로 포탈을 통과합니다.
+### 3.2. 의존성 결합 완화 및 Traveler 일반화
+* **Before (강한 결합 및 책임 초과)**: 초기 텔레포트 로직이 `PlayerController` 클래스 내에 하드코딩되어 작동하여 의존성이 매우 높았습니다. 이로 인해 상자(Cube)나 공 등 플레이어 외의 물리 객체를 포탈에 통과시키려면 통과 로직 스크립트를 중복 작성해야 하는 치명적인 확장성 결함이 있었습니다.
+* **After (PortalTraveler 범용화)**: 포탈 통과에 필요한 핵심 로직을 담은 범용 컴포넌트인 **`PortalTraveler`** 클래스를 별도 분리 설계했습니다. `Portal`은 대상이 `PortalTraveler` 컴포넌트를 지니고 있는지 여부만 판단하며, 결합도가 완화되어 임의의 물리 객체에 해당 컴포넌트만 부착하면 코드 한 줄 수정 없이 포탈 이동이 가능합니다.
+
+```mermaid
+flowchart LR
+    subgraph Dep ["PlayerController에 종속"]
+        P1["Portal"]
+        PC1["PlayerController"]
+        P1 -->|"오직 PlayerController만 인식"| PC1
+    end
+
+    subgraph Gen ["PortalTraveler로 일반화"]
+        P2["Portal"]
+        PC2["PlayerController"]
+        Cube["Teleportable_Cube"]
+        Etc["Teleportable_Etc"]
+        Traveler{"PortalTraveler"}
+
+        P2 -->|"PortalTraveler를 가진 모든 오브젝트 인식"| Traveler
+        PC2 --> Traveler
+        Cube --> Traveler
+        Etc --> Traveler
+    end
+
+    Dep --> Gen
+```
+
+### 3.3. 운동량 보존
+
+<div class="image-card-text hover-image" data-image="portfolio/project1/images/video/3.3.mp4">
+  <p>포탈을 통과하는 순간 물체의 <strong>기존 가속 속도와 궤적 방향을 그대로 유지</strong>하고 튕겨 나가도록 리지드바디의 <strong>속도 벡터를 입출구 포탈 회전 행렬 곱 연산에 대입하여 변환</strong>을 수행합니다.</p>
+</div>
+
+```csharp
+// PlayerController.cs 내의 Teleport 오버라이드 및 속도 벡터 선형 변환
+public override void Teleport (Transform fromPortal, Transform toPortal, Vector3 pos, Quaternion rot) {
+    1. 월드 좌표계 상의 위치를 목적지 포탈 좌표로 갱신
+    transform.position = pos;
+    
+    2. 두 포탈 간의 회전 각도 차이를 계산하여 플레이어 시선 방향 보정
+    Vector3 eulerRot = rot.eulerAngles;
+    float delta = Mathf.DeltaAngle (smoothYaw, eulerRot.y);
+    yaw += delta;
+    smoothYaw += delta;
+    transform.eulerAngles = Vector3.up * smoothYaw;
+    
+    3. 입출구 포탈의 회전 행렬을 기준으로 **속도 벡터를 실시간 선형 변환**
+    **velocity = toPortal.TransformVector (fromPortal.InverseTransformVector (velocity));**
+    
+    4. 순간이동 직후 물리 충돌체의 즉각적인 트랜스폼 동기화 실행
+    Physics.SyncTransforms ();
+}
+```
+
 
 ---
 
-### 3.3. Matrix4x4 변환 행렬 기반 뷰 동기화
-플레이어가 한쪽 포탈을 바라볼 때 반대편 포탈(출구)에 배치된 가상 카메라가 플레이어 시점과 동일한 각도/거리로 월드를 비추어야 거울과 같은 착시 공간 효과가 형성됩니다. 포탈이 월드 상에서 회전하거나 기울어졌을 때의 절대 시점 동기화를 위해 거울 반사 변환 행렬식을 응용하여 좌표축을 연산합니다.
+## 4. 포탈 렌더링 로직
+
+### 4.1. Matrix4x4 행렬 기반 뷰 동기화
+
+<div class="image-card-text hover-image" data-image="portfolio/project1/images/4.1.png">
+  <p>플레이어가 바라보는 시점에 맞춰 반대편 출구 포탈에 위치한 <strong>가상 카메라(Portal Camera)</strong>가 월드를 정확히 매칭 렌더링해야 일그러짐 없는 거울형 공간 착시를 완성할 수 있습니다.</p>
+  <p>초기에는 단순히 위치 오프셋(입구 포탈과의 상대 거리) 계산에 의존했으나, 포탈이 회전하거나 기울어질 때 시야가 왜곡되는 심각한 시각적 오류가 발생했습니다. 이를 <strong>거울 반사 행렬</strong> 계산을 응용한 행렬 결합식으로 완전히 해결했습니다.</p>
+</div>
 
 ```csharp
-// 플레이어 카메라의 로컬 행렬을 출구 포탈 좌표계로 변환한 후, 입구 포탈 좌표계로 복귀시켜 최종 카메라 Matrix 획득
+1. 기준이 되는 플레이어 카메라의 월드 트랜스폼 행렬 정보 캐싱
 Matrix4x4 localToWorldMatrix = playerCam.transform.localToWorldMatrix;
 
-// 1. linkedPortal의 월드 좌표계를 로컬(WorldToLocal)로 압축
-// 2. 현재 포탈의 로컬 좌표계를 월드(LocalToWorld)로 확장 변환하여 행렬 곱연산 수행
-localToWorldMatrix = transform.localToWorldMatrix * linkedPortal.transform.worldToLocalMatrix * localToWorldMatrix;
+for (int i = 0; i < recursionLimit; i++) {
+    if (i > 0) {
+        2. 포탈 면의 렌더 영역이 서로 겹치지 않으면 **불필요한 재귀 연산 중단**
+        if (!CameraUtility.BoundsOverlap (screenMeshFilter, linkedPortal.screenMeshFilter, portalCam)) {
+            break;
+            // 포탈 간의 화면이 겹치지 않으면 렌더링을 중단
+        }
+    }
+    3. 플레이어 기준 카메라 행렬을 입/출구 포탈 상대 대칭 좌표계로 **누적 회전 변환**
+    **localToWorldMatrix = transform.localToWorldMatrix * linkedPortal.transform.worldToLocalMatrix * localToWorldMatrix;**
 
-// 3. 변환된 행렬에서 가상 카메라의 월드 위치(Position) 및 회전(Rotation) 추출 대입
-portalCam.transform.SetPositionAndRotation(
-    localToWorldMatrix.GetColumn(3), 
-    localToWorldMatrix.rotation
-);
-```
+    int renderOrderIndex = recursionLimit - i - 1;
+    //변환 행렬에서 위치(Position) 정보 GetColumn(3)를 가져오고 회전(Rotation) 정보는 localToWorldMatrix.rotation으로 가져옴
+    renderPositions[renderOrderIndex] = localToWorldMatrix.GetColumn (3);
+    renderRotations[renderOrderIndex] = localToWorldMatrix.rotation;
 
----
-
-### 3.4. Frustum Culling 시야 검출 최적화
-포탈 너머를 비추는 가상 카메라는 리소스를 대량 소비하므로, 플레이어가 포탈의 단면을 직접 시야 내에 담고 있을 때만 렌더링이 가동되도록 Frustum(시야 절두체) 선별 알고리즘을 구축하여 드로우콜 병목을 제거했습니다.
-
-```csharp
-// 포탈 단면의 Mesh Bounding Box가 카메라의 6개 절두체 평면 안에 걸쳐 있는지 교차 검사
-public static bool VisibleFromCamera(Renderer renderer, Camera camera)
-{
-    // 카메라의 시야 평면 6개 획득
-    Plane[] frustumPlanes = GeometryUtility.CalculateFrustumPlanes(camera);
-    
-    // Bounds와 평면 간 충돌 테스트 결과 반환 (시야 밖일 경우 false 반환하여 렌더링 skip)
-    return GeometryUtility.TestPlanesAABB(frustumPlanes, renderer.bounds);
+    4. 계산된 최종 월드 좌표 정보를 **가상 카메라 트랜스폼에 동기화**
+    **portalCam.transform.SetPositionAndRotation (renderPositions[renderOrderIndex], renderRotations[renderOrderIndex]);**
+    startIndex = renderOrderIndex;
 }
 ```
-* **재귀 제한**: 마주보는 포탈 배치 시 무한 카메라 루프를 돌지 않도록 `recursionLimit` 한계 정수값(기본 2~3회 제한)을 셰이더 렌더 카운트에 두어 안전망을 제공합니다.
 
----
+#### 📐 좌표계 변환 및 행렬 곱 순서
+1. **WorldToLocal**: 월드 공간의 플레이어 카메라 트랜스폼 정보를 출구 포탈의 로컬 좌표계 공간으로 가압축 변환합니다. 플레이어 카메라가 출구 포탈을 기준으로 어느 각도와 거리에 위치하는지 로컬 상대 좌표를 획득합니다.
+2. **LocalToWorld**: 앞서 1단계에서 계산된 로컬 상대 트랜스폼 좌표를 현재 입구 포탈의 로컬 좌표계 공간에 대칭 매핑한 뒤, 이를 다시 월드 좌표계 공간으로 곱하여 복원 확장합니다.
+   `localToWorldMatrix = transform.localToWorldMatrix * linkedPortal.transform.worldToLocalMatrix * localToWorldMatrix;`
 
-### 3.5. GraphicsClone & Custom Shader 클리핑 단면 렌더링
-물체가 포탈 경계면을 관통하는 동안 단면이 자연스럽게 잘려 나가고 동시에 출구 포탈 단면에서 튀어나오도록 하는 그래픽 최적화 셰이더입니다.
+```mermaid
+flowchart LR
+    A["🔵 플레이어 캠 World\n──────────────────\nPlayerCam World Matrix\n- - - - - - - - - - -\n| 1  0  0  5 |\n| 0  1  0  2 |\n| 0  0  1 10 |\n| 0  0  0  1 |\n- - - - - - - - - - -\nWorld Pos: (5, 2, 10)"]
 
-* **GraphicsClone**: 진입 물체의 스킨드 메쉬 렌더러와 애니메이터 정보를 실시간 복제하여 출구 포탈 측에 평행 생성시킵니다.
-* **Custom Shader**: 포탈 게이트 평면의 월드 위치와 법선 벡터를 셰이더 변수로 전달받아 픽셀 렌더링 전 `clip()` 명령어로 픽셀을 버립니다.
+    B["LinkedPortal_WorldToLocal\n──────────────────\nDest_WorldToLocal\n- - - - - - - - - - -\n|  1  0  0   0 |\n|  0  1  0   0 |\n|  0  0  1 -20 |\n|  0  0  0   1 |\n- - - - - - - - - - -\nLinked Portal Pos: (0, 0 20)"]
+
+    C["🟡 중간 Matrix 행렬\n──────────────────\nIntermediate Matrix\n- - - - - - - - - - -\n| 1  0  0   5 |\n| 0  1  0   2 |\n| 0  0  1 -10 |\n| 0  0  0   1 |\n- - - - - - - - - - -\nRelative Pos: (5, 2, -10)"]
+
+    D["Portal_LocalToWorld\n──────────────────\nSource_LocalToWorld\n- - - - - - - - - - -\n| -1  0   0  30 |\n|  0  1   0   0 |\n|  0  0  -1   0 |\n|  0  0   0   1 |\n- - - - - - - - - - -\nSource Portal Pos: (30, 0, 0)\nY축으로 180도 회전한 상태"]
+
+    E["🟢 최종 Matrix 행렬\n──────────────────\nFinal PortalCam Matrix\n- - - - - - - - - - -\n| -1  0   0  25 |\n|  0  1   0   2 |\n|  0  0  -1  10 |\n|  0  0   0   1 |\n- - - - - - - - - - -\nWorld Pos: (25, 2, 10)\nY축으로 180도 회전한 상태"]
+
+    A -->|"①WorldToLocal"| B
+    B -->|"중간 행렬"| C
+    C -->|"②LocalToWorld"| D
+    D -->|"최종 위치"| E
+
+    style A fill:#BFDBFE,stroke:#2563EB,color:#1E3A8A
+    style B fill:#FFFFFF,stroke:#D1D5DB,color:#374151
+    style C fill:#FEF3C7,stroke:#D97706,color:#92400E
+    style D fill:#FFFFFF,stroke:#D1D5DB,color:#374151
+    style E fill:#D1FAE5,stroke:#059669,color:#065F46
+```
+
+<p style="text-align:center; font-size:0.85rem; color:#4B5563; margin: 16px 0 12px;">
+  <strong>PC</strong> = 플레이어 캠 &nbsp;|&nbsp; <strong>O1</strong> = LinkedPortal_WorldToLocal &nbsp;|&nbsp; <strong>O2</strong> = SourcePortal_LocalToWorld
+</p>
+
+<div style="display:flex; gap:16px; margin:16px 0; font-family:var(--font-sans);">
+  <div style="flex:1; border:1px solid #E5E7EB; border-radius:10px; padding:16px 20px; background:#F9FAFB; font-size:0.88rem;">
+    <p style="font-weight:700; margin-bottom:10px; color:#111827;">① 중간 결과 = O1 × PC</p>
+    <table style="width:100%; border-collapse:collapse; font-family:var(--font-mono);">
+      <tr><td style="padding:2px 8px; color:#4B5563;">x = (1 × 5) + 0</td><td style="padding:2px 8px; font-weight:700; color:#2563EB;">x = 5</td></tr>
+      <tr><td style="padding:2px 8px; color:#4B5563;">y = (1 × 2) + 0</td><td style="padding:2px 8px; font-weight:700; color:#2563EB;">y = 2</td></tr>
+      <tr><td style="padding:2px 8px; color:#4B5563;">z = (1 × 10) + (−20)</td><td style="padding:2px 8px; font-weight:700; color:#2563EB;">z = −10</td></tr>
+    </table>
+  </div>
+  <div style="flex:1; border:1px solid #E5E7EB; border-radius:10px; padding:16px 20px; background:#F9FAFB; font-size:0.88rem;">
+    <p style="font-weight:700; margin-bottom:10px; color:#111827;">② 최종 결과 = O2 × 중간 결과</p>
+    <table style="width:100%; border-collapse:collapse; font-family:var(--font-mono);">
+      <tr><td style="padding:2px 8px; color:#4B5563;">x = (−1 × 5) + 30</td><td style="padding:2px 8px; font-weight:700; color:#2563EB;">x = 25</td></tr>
+      <tr><td style="padding:2px 8px; color:#4B5563;">y = (1 × 2) + 0</td><td style="padding:2px 8px; font-weight:700; color:#2563EB;">y = 2</td></tr>
+      <tr><td style="padding:2px 8px; color:#4B5563;">z = (−1 × −10) + 0</td><td style="padding:2px 8px; font-weight:700; color:#2563EB;">z = 10</td></tr>
+    </table>
+  </div>
+</div>
+
+### 4.2. Frustum Culling 시야 검출 최적화
+포탈의 렌더링 카메라는 실시간 Render Texture를 연산하므로 다량의 드로우콜 병목을 동반합니다. 플레이어가 포탈의 단면을 보지 않을 때는 렌더링 연산을 완전히 생략하도록 시야 절두체 선별(Frustum Culling) 최적화 알고리즘을 작성했습니다.
+
+```csharp
+// GeometryUtility AABB 교차 검증을 통한 시야 범위 판정식
+public static bool VisibleFromCamera (Renderer renderer, Camera camera) {
+    1. 카메라 시야를 구성하는 6개 평면 절두체 배열 계산
+    Plane[] frustumPlanes = GeometryUtility.CalculateFrustumPlanes (camera);
+    
+    2. 포탈 스크린 bounds 영역이 **절두체 평면에 포함되는지 검증**
+    return GeometryUtility.TestPlanesAABB (frustumPlanes, renderer.bounds);
+}
+```
+
+### 4.3. recursionLimit를 활용한 무한 재귀 방어
+<div class="image-card-text hover-image" data-image="portfolio/project1/images/4.3.png">
+<p>입출구 포탈이 서로 마주보게 설치될 경우, 두 가상 카메라가 거울 속 거울처럼 <strong>무한히 루프 렌더링</strong>하여 프레임이 0으로 떨어지며 붕괴합니다. 이를 위해 인스펙터 제어 변수 <code>recursionLimit</code> 한계 값(기본 2~3회)을 설정하고, 한계에 도달하면 <strong>검은색 단면 텍스처로 렌더 카운트를 강제 종료</strong>해 안전망을 구축했습니다.</p>
+</div>
+
+```csharp
+// **[무한 재귀 방어]** 재귀 제한 카운터 크기 캐싱 및 프로젝션 행렬 동기화 셋업
+Vector3[] renderPositions = new Vector3[recursionLimit];
+Quaternion[] renderRotations = new Quaternion[recursionLimit];
+
+int startIndex = 0;
+portalCam.projectionMatrix = playerCam.projectionMatrix;
+
+Matrix4x4 localToWorldMatrix = playerCam.transform.localToWorldMatrix;
+for (int i = 0; i < recursionLimit; i++) {
+    if (i > 0) {
+        // **[조기 차단]** 포탈이 서로를 비추고 있는 상황이 아니라면 반복을 중단 (오버헤드 방지)
+        if (!CameraUtility.BoundsOverlap (screenMeshFilter, linkedPortal.screenMeshFilter, portalCam)) {
+            break;
+        }
+    }
+    // **[대칭 행렬곱]** 현재 포탈의 로컬 좌표계를 연결된 포탈의 로컬 좌표계로 실시간 회전 대칭 변환
+    localToWorldMatrix = transform.localToWorldMatrix * linkedPortal.transform.worldToLocalMatrix * localToWorldMatrix;
+
+    int renderOrderIndex = recursionLimit - i - 1;
+    // 변환 행렬에서 위치(Position) 정보 GetColumn(3)와 회전(Rotation) 정보를 추출하여 적용
+    renderPositions[renderOrderIndex] = localToWorldMatrix.GetColumn (3);
+    renderRotations[renderOrderIndex] = localToWorldMatrix.rotation;
+
+    portalCam.transform.SetPositionAndRotation (renderPositions[renderOrderIndex], renderRotations[renderOrderIndex]);
+    startIndex = renderOrderIndex;
+}
+```
+
+### 4.4. GraphicsClone 및 셰이더 단면 클리핑
+
+<div class="image-card-text hover-image" data-image="portfolio/project1/images/4.4.png">
+  <p>물체가 포탈 경계를 넘어가는 동안 절반은 이쪽 포탈에, 나머지 절반은 저쪽 포탈에 온전히 묘사되어야 <strong>공간 연속성</strong>을 완성할 수 있습니다. 이를 위해 <code>GraphicsClone</code>과 커스텀 셰이더를 유기적으로 조합하여 <strong>절반만 포탈에 걸친 물체</strong>를 시각적으로 표현했습니다.</p>
+  <ul>
+    <li><strong>GraphicsClone (실시간 복제본)</strong>: 포탈을 통과하는 객체의 '반대편 모습'을 묘사하기 위한 복제체입니다. 이와 관련된 위치/회전 동기화 등 모든 핵심 제어 로직은 <code>PortalTraveler.cs</code> 스크립트에 구현되어 있습니다.</li>
+    <li><strong>커스텀 셰이더 (단면 소거)</strong>: 렌더링될 때 포탈 평면을 기준으로 물체가 앞에 있는지 뒤에 있는지 실시간으로 검사합니다. 렌더링 중인 픽셀의 월드 위치(<code>offsetToSliceCentre</code>)와 기준 평면 법선 벡터(<code>sliceNormal</code>)를 내적 연산하고, 그 결과가 음수일 경우 HLSL <code>clip()</code> 내장 함수를 통해 해당 픽셀을 화면에 그려지기 전에 소거(Discard) 처리합니다.</li>
+  </ul>
+</div>
 
 ```hlsl
-// 커스텀 픽셀 셰이더 단면 클리핑 연산
+// Slice.shader 내 frag 단면 클리핑 픽셀 소거 연산
 half4 frag(Varyings i) : SV_Target
 {
-    // 슬라이스 기준면에서 픽셀 월드 위치까지의 거리 벡터 산출
+    1. 슬라이스 중심 좌표에 실시간 오프셋 거리를 연산하여 보정된 중심점 획득
     float3 adjustedCentre = sliceCentre + sliceNormal * sliceOffsetDst;
+    
+    2. 보정된 단면 중심점으로부터 현재 렌더링 중인 픽셀의 월드 좌표 방향 벡터 계산
     float3 offsetToSliceCentre = adjustedCentre - i.worldPos;
 
-    // 내적값 부호에 따라 음수 평면 영역의 픽셀 렌더링을 폐기(Discard)
-    clip(dot(offsetToSliceCentre, sliceNormal));
+    3. 픽셀 방향 벡터와 평면 법선 벡터의 내적값이 음수(반대편)인 영역 **즉시 컬링(Discard)**
+    **clip(dot(offsetToSliceCentre, sliceNormal));**
 
-    // 기본 텍스처 컬러링 및 PBR 광원 연산 수행
-    half4 c = tex2D(_MainText, i.uv) * _Color;
-    return c;
+    4. 생존한 영역에 텍스처 맵 및 머티리얼 기본 색상 적용
+    half4 c = tex2D(_MainTex, i.uv) * _Color;
+
+    5. 유니티 PBR 셰이더 결과 구조체에 색상 최종 매핑 및 반환
+    half4 output;
+    output.rgb = c.rgb;
+    output.a = c.a;
+    return output;
 }
 ```
 
 ---
 
-### 3.6. 운동량 보존 법칙 및 터널링 현상 회고
-물체가 포탈을 통과하는 순간의 회전 변환 행렬값을 기존 물리 속도 벡터(Velocity)에 내장 곱연산하여, 포탈 탈출 시 속도 손실 없이 방향과 중가속도를 완벽히 이전 및 보존합니다.
+## 5. 고민과 선택 : 대안 비교 및 결정 근거
 
-```csharp
-// PortalTraveler.cs 내부 속도 및 회전 동기화
-public virtual void Teleport(Transform fromPortal, Transform toPortal, Vector3 pos, Quaternion rot)
-{
-    transform.position = pos;
-    transform.rotation = rot;
-    
-    // 리지드바디가 존재할 경우, 출구 포탈 회전 행렬 곱 연산으로 속도 벡터 방향 전환 동기화
-    if (rb != null)
-    {
-        rb.velocity = toPortal.TransformDirection(fromPortal.InverseTransformDirection(rb.velocity));
-    }
-}
-```
+### 5.1. 고민 1: 포탈 물리 통과 판정 방식 선택
+* **대안 A (유니티 Trigger Collider)** vs **대안 B (Dot Product 벡터 내적 판정)**
 
-* **터널링(Tunneling) 한계 및 회고**:
-  - **문제**: 포탈 통과 후 중력 가속도가 임계치 이상으로 극대화되면, 한 프레임의 이동 거리가 포탈 두께를 추월하여 순간이동 통과 판정을 뛰어넘고 벽에 박히는 현상 발생.
-  - **개선안**: 다음 업데이트 시 `Rigidbody.collisionDetectionMode`를 `Continuous` 또는 `ContinuousDynamic`으로 변경 적용하고, 이전 프레임 위치에서 현재 프레임 위치 방향으로 별도 레이캐스트 소인(Sweeping)을 가동하는 로직 리팩토링 검토 중.
+| 기술 대안 | 장점 | 단점 | 선택 여부 및 결정 근거 |
+| :--- | :--- | :--- |:--------------|
+| **대안 A (Collider)** | 구현 난이도가 낮으며, 내장 물리 시스템을 재활용하므로 빠르고 간편함. | 프레임 밀림 현상 발생. 포탈 경계면에 오브젝트가 걸쳐 통과하는 시각 마스킹 구현 불가. | ❌ 폐기          |
+| **대안 B (Dot Product)** | 프레임 유실이 전혀 없음. 매 프레임 기하학적 평면 교차를 검출하므로 걸침 연출 가능. | 매 프레임 Vector 내적 연산 리소스 추가 소비. | ⭕ **최종 채택**   |
+
+### 5.2. 고민 2: 뷰 카메라 위치 동기화 알고리즘
+* **대안 A (상대 좌표 거리 오프셋)** vs **대안 B (Matrix4x4 거울 반사 변환 행렬곱)**
+
+| 기술 대안 | 장점 | 단점 | 선택 여부 및 결정 근거 |
+| :--- | :--- | :--- | :--- |
+| **대안 A (상대 오프셋)** | 단순 벡터 뺄셈과 덧셈으로만 구현 가능하여 수식 연산 부담이 거의 없음. | 포탈이 기울어지거나 회전되어 있을 때 뷰 각도가 꼬여 렌더 텍스처 왜곡 붕괴. | ❌ 폐기 |
+| **대안 B (Matrix4x4)** | 포탈이 90도 회전하거나 뒤집혀 있어도 완벽한 1:1 대칭 시점 렌더링 보장. | 행렬 연산 곱셉 2회로 인한 수학적 연산 오버헤드 소량 발생. | ⭕ **최종 채택** |
+
+### 5.3. 고민 3: 텔레포트 관리 아키텍처 의존성 설계
+* **대안 A (PlayerController 내 하드코딩)** vs **대안 B (PortalTraveler 범용 컴포넌트 설계)**
+
+| 기술 대안 | 장점 | 단점 | 선택 여부 및 결정 근거 |
+| :--- | :--- | :--- | :--- |
+| **대안 A (하드코딩)** | 단일 파일 관리로 빠른 초기 프로토타입 작성 가능. | 다른 오브젝트(큐브 상자 등) 통과 시 스크립트를 복사 중복 작성해야 하여 결합도 증가. | ❌ 폐기 |
+| **대안 B (Traveler)** | SRP(단일책임) 및 확장성 만족. 새로운 사물에 컴포넌트 부착 시 코드 수정 없이 통과. | 컴포넌트 조회(`GetComponent`) 등으로 인한 런타임 캐싱 기법 사전 설계 필요. | ⭕ **최종 채택** (다채로운 퍼즐 기믹과의 확장성 보장을 위해 채택) |
 
 ---
 
-## 4. 퍼즐 기믹 및 UX 개선
+## 6. 퍼즐 기믹
 
-* **포탈 연쇄 레이캐스트 다리 설치**: 플레이어가 발사한 가교 형성 광선이 포탈을 통과할 경우, 반대편 포탈 위치에서 동일 레이캐스트를 연쇄 연동 발사해 최종 벽면을 감지하여 다리를 설치하는 시퀀스 설계.
-* **픽셀 감지 스탯 변경 페인트볼**: 캐릭터 하향 레이캐스트 지점의 텍스처 UV 픽셀 컬러값을 읽어 `switch` 분기 처리하여, 파란색(이동 가속), 빨간색(점프력 점프 부스트) 등 캐릭터의 이동 스탯을 동적 통제하는 런타임 콜백 기믹 구현.
-* **더미 스테이지 심리스 씬 전환**: 다음 구역 로드 시 발생하는 화면 끊김을 방지하기 위해, 포탈 게이트 후면에 다음 씬에 배치된 오브젝트의 더미 클론을 미리 배치 렌더링하여 두 공간이 하나로 이어진 것과 같은 극적 공간 연속성 연출.
+### 6.1. 연쇄 가교 설치 기믹
+<div class="image-card-text hover-image" data-image="portfolio/project1/images/6.1-1.png, portfolio/project1/images/6.1-2.png">
+<p>플레이어가 발사한 가교 형성 광선이 포탈에 부딪힐 경우, 입구 포탈에서 광선의 입사각과 충돌 벡터를 계산한 뒤 출구 포탈에서 <strong>연쇄적으로 두 번째 레이캐스트를 발사</strong>하여 최종 벽면을 감지하고 <strong>끊김 없이 다리 구조를 연결</strong>하는 연쇄 가교 기믹입니다.</p>
+</div>
+
+
+```mermaid
+sequenceDiagram
+    participant CB as CreateBridge
+    participant B as Bridge
+    participant BC as BridgeClone
+
+    CB->>CB: HandlePortalFire() 실행
+    CB->>CB: CreateBridgeClone() 호출
+    CB->>B: rayCast()로 충돌 지점 탐색
+
+    alt 레이캐스트 성공 충돌 지점이 벽인 경우
+        B->>B: CreateBridges() 호출하여 다리 타일 생성
+    else 충돌 지점이 포탈(Portal)인 경우
+        CB->>BC: 반대편 포탈 위치에 복제 생성
+        BC->>B: rayCast()로 충돌 지점 탐색
+        B->>B: CreateBridges() 호출하여 다리 타일 생성
+    end
+```
+
+---
+
+### 6.2. 발밑 픽셀 감지 스탯 변경 페인트볼 기믹
+플레이어 발밑 수직 방향으로 실시간 레이캐스트를 발사해 바닥 재질 머티리얼의 UV 좌표 픽셀 컬러 정보를 런타임에 획득(<code>GetPixelColorAtRayHit</code>)하고, 그 색상 결과(R, G, B 각각의 값)를 조건부로 검사해 플레이어의 이동 속도 및 점프력 스탯을 실시간으로 변경하는 기믹입니다.
+※ 단, 해당 레이캐스트 및 감지 연산은 페인트볼 기믹이 등장하는 특정 스테이지에서만 제한적으로 활성화되어 동작합니다.
+
+---
+
+### 6.3. 물리 트리거 버튼 기믹
+<div class="image-card-text hover-image" data-image="portfolio/project1/images/6.3-1.png, portfolio/project1/images/6.3-2.png">
+<p>큐브 오브젝트가 버튼 감지 실린더 위에 얹어질 때만 <strong>실질적인 트리거가 활성화</strong>되며, 이탈 시 <strong>복원 스프링 모션</strong>과 함께 비활성화됩니다. '트리거', '버튼', '큐브' 3개의 <strong>태그 검사</strong>를 통해 부정 상호작용을 방지합니다.</p>
+</div>
+
+
+```mermaid
+sequenceDiagram
+    participant C as Cube
+    participant BO as ButtonObject
+    participant R as Rigidbody
+
+    C->>BO: OnCollisionEnter (충돌 시작)
+    C->>BO: OnCollisionExit (충돌 종료)
+
+    alt 충돌 종료 시 Cube인 경우
+        BO->>R: AddForce(Vector3.up * (-a)) 호출
+    end
+```
+---
+
+## 7. 프로젝트 회고
+
+### 7.1. 성능 검증 및 최적화 성과
+* **Frustum Culling 기반 카메라 렌더 성능 선별**:
+  - **도입 전**: 플레이어가 포탈의 반대 단면을 바라보고 있지 않은 대기 상태나 벽 등판 뒤에서도 가상 카메라 렌더텍스처 연산이 백그라운드에서 매 프레임 상시 구동되어 불필요한 GPU 렌더 패스 및 드로우콜 낭비가 발생했습니다.
+  - **도입 후**: <code>GeometryUtility</code> 평면 교차 검증을 도입하여 카메라 시야 범위 내에 포탈 스크린 메쉬 렌더러의 Bounding Box가 겹치지 않는 노출 스킵 대상일 경우, 포탈 카메라 렌더링을 차단하여 불필요한 렌더 연산 누적을 사전에 완벽히 차단했습니다.
+
+### 7.2. 개선 계획
+* **고속 낙하 터널링 물리 결함**:
+  - **원인**: 수직 낙하 반복을 통해 가속도가 한계 속도(Terminal Velocity)를 초과할 경우, 한 프레임의 이동 거리가 포탈 평면 콜라이더의 두께를 앞질러 내적 부호 교차 판정이 씹히고 바닥에 박혀 죽는 터널링 버그가 발견되었습니다.
+  - **개선 계획 (✓ / △ / →)**:
+    - **✓ 달성한 성과**: 내적 기반 공간 관통 판정에 성공하고 드로우콜 낭비 연산을 절감했으며, 재귀 렌더링 한계선 설정 및 더미 씬 로드를 적용했습니다.
+    - **△ 한계점**: 물리 프레임 주기를 초과하는 극단적 고속 통과 시 충돌 스킵 현상이 존재합니다.
+    - **→ 향후 계획**: 유니티 <code>Continuous Dynamic</code> 충돌 감지 모드를 활성화하고, 매 프레임 포탈 중심선 방향으로 <code>BoxCastAll</code> 물리 소인(Sweeping) 판정식을 보강하여 터널링을 차단할 예정입니다.
+* **포탈 투과 그림자 연출**:
+  - **한계 및 개선 계획 (→)**: 현재 빛이 포탈 스크린 평면을 통과하여 그림자를 입체적으로 투사하지 못하는 시각적 한계가 존재합니다. 향후 계획으로 캐릭터 및 사물의 그림자가 포탈 너머 공간으로 부드럽게 이어져 투사되도록 구현할 예정입니다.

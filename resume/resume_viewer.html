@@ -487,8 +487,21 @@
       transform: translateY(-1px);
     }
 
-    .toolbar-btn svg {
-      margin-right: 6px;
+    /* 본문 영역 내 이미지 레이아웃 및 디자인 */
+    #main-content-window img {
+      max-width: 100% !important;
+      height: auto !important;
+      display: block;
+      margin: 28px auto;
+      border-radius: 10px;
+      border: 1px solid var(--card-border);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    #main-content-window img:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
     }
 
     /* ── 인쇄 전용 스타일 (PDF 내보내기용) ── */
