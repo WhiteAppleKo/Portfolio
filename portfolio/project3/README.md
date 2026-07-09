@@ -1,5 +1,5 @@
 # XR Lab
-### Unity XR Interaction Toolkit 기반 가상현실 물리 상호작용 및 내장 Lock Grid 소켓 필터링 기술 검증 프로젝트
+### Unity XR Interaction Toolkit 기반 가상현실 물리 상호작용 및 내장 Lock Grid 소켓 필터링 프로젝트
 
 <!-- link-github: https://github.com/Trouble-Shooting-Script/VRLab -->
 <!-- link-video: https://youtu.be/pWH_7CpxJMc -->
