@@ -1379,7 +1379,7 @@
       });
 
       popup.addEventListener('mousedown', (e) => {
-        if (!isPinned || currentScale <= 1.0) return;
+        if (!isPinned) return;
         isDragging = true;
         popup.style.cursor = 'grabbing';
         startX = e.clientX - offsetX;
@@ -1398,7 +1398,7 @@
       window.addEventListener('mouseup', () => {
         if (!isDragging) return;
         isDragging = false;
-        popup.style.cursor = isPinned && currentScale > 1.0 ? 'grab' : 'default';
+        popup.style.cursor = isPinned ? 'grab' : 'default';
       });
 
       popup.style.cursor = 'default';
@@ -1412,7 +1412,7 @@
           currentScale = Math.max(0.5, currentScale - 0.1);
         }
         popup.style.transform = `scale(${currentScale}) translate(${offsetX / currentScale}px, ${offsetY / currentScale}px)`;
-        popup.style.cursor = currentScale > 1.0 ? 'grab' : 'default';
+        popup.style.cursor = 'grab';
         positionTooltip();
         if (hoverTooltipEl) {
           hoverTooltipEl.innerHTML = `<span>↕️</span><span>배율: ${currentScale.toFixed(1)}배</span>`;
@@ -1444,15 +1444,15 @@
           const srcList = imgSrc.split(',').map(s => s.trim());
           
           if (srcList.length > 1) {
-            popup.style.maxWidth = '720px';
+            popup.style.maxWidth = 'none';
             popup.style.display = 'flex';
             popup.style.gap = '12px';
             
             popup.innerHTML = srcList.map(src => {
               const isVideo = src.toLowerCase().endsWith('.mp4');
               return isVideo 
-                ? `<div style="flex:1;"><video src="${src}" autoplay loop muted playsinline style="width:100%; height:auto; display:block; border-radius:10px; border:1px solid var(--card-border);"></video></div>`
-                : `<div style="flex:1;"><img src="${src}" alt="미리보기 이미지" style="width:100%; height:auto; display:block; border-radius:10px; border:1px solid var(--card-border);"></div>`;
+                ? `<div style="flex: 0 0 auto; height: 280px;"><video src="${src}" autoplay loop muted playsinline style="height:100%; width:auto; display:block; border-radius:10px; border:1px solid var(--card-border);"></video></div>`
+                : `<div style="flex: 0 0 auto; height: 280px;"><img src="${src}" alt="미리보기 이미지" style="height:100%; width:auto; display:block; border-radius:10px; border:1px solid var(--card-border);"></div>`;
             }).join('');
           } else {
             popup.style.maxWidth = '380px';
@@ -1489,7 +1489,7 @@
           if (isPinned) {
             popup.style.pointerEvents = 'auto';
             popup.classList.add('pinned');
-            popup.style.cursor = currentScale > 1.0 ? 'grab' : 'default';
+            popup.style.cursor = 'grab';
           } else {
             popup.style.pointerEvents = 'none';
             popup.classList.remove('pinned');
