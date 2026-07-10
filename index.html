@@ -12,6 +12,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
   <!-- 공통 디자인 시스템 (theme.css) -->
   <link rel="stylesheet" href="theme.css">
+  <!-- 다크 테마 (동적으로 활성화됨) -->
+  <link rel="stylesheet" href="" id="theme-dark-css" disabled>
   
   <style>
     /* ── index.html 전용 디자인 토큰 ── */
@@ -305,6 +307,42 @@
       border-color: rgba(255, 255, 255, 0.2);
     }
 
+    /* ── 테마 토글 버튼 ── */
+    #theme-toggle {
+      position: fixed;
+      top: 20px;
+      right: 24px;
+      z-index: 9999;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 1px solid var(--card-border);
+      background: var(--card-bg);
+      color: var(--text-main);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-md);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      outline: none;
+    }
+
+    #theme-toggle:hover {
+      transform: scale(1.1) rotate(15deg);
+      border-color: color-mix(in srgb, var(--primary) 50%, transparent);
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 12%, transparent), var(--shadow-lg);
+    }
+
+    #theme-toggle svg {
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s;
+    }
+
+    /* 전환 시 부드러운 fade */
+    body {
+      transition: background-color 0.35s ease, color 0.35s ease;
+    }
+
     /* ── 반응형 레이아웃 ── */
     @media (max-width: 768px) {
       header {
@@ -318,10 +356,21 @@
         align-items: center;
         gap: 16px;
       }
+      #theme-toggle {
+        top: 14px;
+        right: 16px;
+        width: 42px;
+        height: 42px;
+      }
     }
   </style>
 </head>
 <body>
+
+  <!-- 테마 토글 버튼 -->
+  <button id="theme-toggle" aria-label="테마 전환" title="라이트 / 다크 테마 전환">
+    <!-- 아이콘은 JS에서 동적으로 삽입 -->
+  </button>
 
   <header>
     <div class="badge">Unity Game Client Developer</div>
@@ -432,6 +481,70 @@
   <footer>
     <p>© 2026 Game Client Developer Portfolio. Powered by Github Pages.</p>
   </footer>
+
+  <script>
+    /* ── 테마 토글 로직 ── */
+    (function() {
+      const DARK_CSS_HREF = 'theme/theme-dark.css';
+      const STORAGE_KEY   = 'portfolio-theme';
+      const linkEl        = document.getElementById('theme-dark-css');
+      const btn           = document.getElementById('theme-toggle');
+
+      const ICON_LIGHT = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="5"/>
+        <line x1="12" y1="1" x2="12" y2="3"/>
+        <line x1="12" y1="21" x2="12" y2="23"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="1" y1="12" x2="3" y2="12"/>
+        <line x1="21" y1="12" x2="23" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>`;
+
+      const ICON_DARK = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/>
+      </svg>`;
+
+      function applyTheme(isDark) {
+        if (isDark) {
+          linkEl.href     = DARK_CSS_HREF;
+          linkEl.disabled = false;
+          btn.innerHTML   = ICON_LIGHT;
+          btn.title       = '라이트 테마로 전환';
+        } else {
+          linkEl.disabled = true;
+          linkEl.href     = '';
+          btn.innerHTML   = ICON_DARK;
+          btn.title       = '다크 테마로 전환';
+        }
+        localStorage.setItem(STORAGE_KEY, isDark ? 'dark' : 'light');
+      }
+
+      // 초기 테마 적용 (저장값 or 시스템 설정)
+      const saved    = localStorage.getItem(STORAGE_KEY);
+      const prefDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const initDark = saved ? saved === 'dark' : prefDark;
+      applyTheme(initDark);
+
+      // 버튼 클릭 토글
+      btn.addEventListener('click', () => {
+        const nowDark = linkEl.disabled === false && linkEl.href !== '';
+        applyTheme(!nowDark);
+
+        // 버튼 회전 애니메이션
+        btn.style.transform = 'scale(1.2) rotate(180deg)';
+        setTimeout(() => { btn.style.transform = ''; }, 350);
+      });
+
+      // 시스템 테마 변경 감지 (저장값 없을 때만)
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+        if (!localStorage.getItem(STORAGE_KEY)) applyTheme(e.matches);
+      });
+    })();
+  </script>
 
   <script>
     document.addEventListener("DOMContentLoaded", () => {

@@ -15,6 +15,8 @@
   
   <!-- 공통 디자인 시스템 (theme.css) -->
   <link rel="stylesheet" href="theme.css">
+  <!-- 다크 테마 (동적으로 활성화됨) -->
+  <link rel="stylesheet" href="" id="theme-dark-css" disabled>
   
   <!-- Markdown & Diagram & Syntax Highlighting Libraries (CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -841,11 +843,41 @@
       margin-right: 6px;
     }
 
+    /* ── 테마 토글 버튼 ── */
+    #theme-toggle {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: 1px solid var(--card-border);
+      background: var(--card-bg);
+      color: var(--text-muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      outline: none;
+      flex-shrink: 0;
+    }
+
+    #theme-toggle:hover {
+      color: var(--primary);
+      border-color: color-mix(in srgb, var(--primary) 30%, transparent);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
+      transform: scale(1.1) rotate(15deg);
+    }
+
+    body {
+      transition: background-color 0.35s ease, color 0.35s ease;
+    }
+
     /* ── 인쇄 전용 스타일 (PDF 내보내기용) ── */
     @media print {
       .utility-toolbar,
       aside.sidebar,
-      aside.toc-sidebar {
+      aside.toc-sidebar,
+      #theme-toggle {
         display: none !important;
       }
 
@@ -906,6 +938,8 @@
 
     <!-- 플로팅 유틸리티 툴바 -->
     <div class="utility-toolbar">
+      <!-- 테마 토글 -->
+      <button id="theme-toggle" aria-label="테마 전환"></button>
       <a href="#" id="btn-github-link" class="toolbar-btn" target="_blank" title="GitHub 저장소 보기" style="display: none;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
@@ -1822,6 +1856,45 @@
     // 타이틀 연동 비동기 가동 후 라우팅 실행
     syncSidebarTitles();
     route();
+  </script>
+
+  <script>
+    /* ── 테마 토글 로직 ── */
+    (function() {
+      const DARK_CSS_HREF = 'theme/theme-dark.css';
+      const STORAGE_KEY   = 'portfolio-theme';
+      const linkEl        = document.getElementById('theme-dark-css');
+      const btn           = document.getElementById('theme-toggle');
+
+      const ICON_LIGHT = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
+      const ICON_DARK  = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>`;
+
+      function applyTheme(isDark) {
+        if (isDark) {
+          linkEl.href = DARK_CSS_HREF; linkEl.disabled = false;
+          btn.innerHTML = ICON_LIGHT; btn.title = '라이트 테마로 전환';
+        } else {
+          linkEl.disabled = true; linkEl.href = '';
+          btn.innerHTML = ICON_DARK; btn.title = '다크 테마로 전환';
+        }
+        localStorage.setItem(STORAGE_KEY, isDark ? 'dark' : 'light');
+      }
+
+      const saved = localStorage.getItem(STORAGE_KEY);
+      const prefDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      applyTheme(saved ? saved === 'dark' : prefDark);
+
+      btn.addEventListener('click', () => {
+        const nowDark = !linkEl.disabled && linkEl.href !== '';
+        applyTheme(!nowDark);
+        btn.style.transform = 'scale(1.2) rotate(180deg)';
+        setTimeout(() => { btn.style.transform = ''; }, 350);
+      });
+
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+        if (!localStorage.getItem(STORAGE_KEY)) applyTheme(e.matches);
+      });
+    })();
   </script>
 
 </body>

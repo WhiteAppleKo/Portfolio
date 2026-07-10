@@ -1,167 +1,101 @@
 @charset "UTF-8";
 
 /* ==========================================================================
-   김우태 개발자 포트폴리오 웹 허브 — 공통 디자인 시스템 (theme-dark.css)
-   [다크 네온 글래스모피즘 테마]
+   김우태 개발자 포트폴리오 웹 허브 — 다크 테마 (theme-dark.css)
+   [미니멀 / 문서형 다크 테마]
+   사용법: theme.css 로드 후 이 파일을 추가 로드하면 다크 테마 적용
    ========================================================================== */
 
 :root {
-  /* ── 폰트 2종 (본문용 산세리프 / 코드용 고정폭) ── */
-  --font-sans: 'Outfit', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'JetBrains Mono', 'D2Coding', Consolas, monospace;
+  /* ── 테마 3색 (미니멀/문서형 다크 테마) ── */
+  --bg-light: #0F1117;            /* 1. 배경색 (딥 다크 네이비) */
+  --text-main: #E2E8F0;           /* 2. 텍스트색 (연밝은 슬레이트) */
+  --primary: #60A5FA;             /* 3. 강조색 (밝은 스카이 블루) */
 
-  /* ── 테마 3색 (다크 네온 글래스모피즘 테마) ── */
-  --bg-dark: #0B0F19;         /* 1. 배경색 (깊은 다크 네이비) */
-  --text-main: #F3F4F6;       /* 2. 텍스트색 (미색 밝은 회색) */
-  --primary: #A855F7;         /* 3. 강조색 (네온 퍼플) */
-  
   /* ── 서브 강조 및 상태 컬러 ── */
-  --secondary: #6366F1;       /* 네온 인디고 */
-  --text-muted: #9CA3AF;      /* 흐린 설명용 그레이 */
-  --accent: #F59E0B;          /* 경고/포인트 앰버 */
-  
-  /* ── 글래스모피즘 표준 디자인 토큰 ── */
-  --card-bg: rgba(17, 24, 39, 0.7);
-  --card-border: rgba(255, 255, 255, 0.08);
-  --primary-glow: rgba(168, 85, 247, 0.15);
-  --secondary-glow: rgba(99, 102, 241, 0.15);
+  --secondary: #818CF8;           /* 밝은 인디고 계열 */
+  --text-muted: #94A3B8;          /* 밝은 슬레이트 뮤트 */
+  --accent: #FBBF24;              /* 밝은 앰버/골드 */
+
+  /* ── 미니멀 보더 & 섀도우 토큰 ── */
+  --card-bg: #1A1D27;             /* 카드 배경 (다크 인디고) */
+  --card-image-bg: #1e2340;       /* 이미지 카드 배경색 */
+  --card-border: #2D3748;         /* 다크 경계선 */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+
+  /* ── 코드 블록 토큰 ── */
+  --code-bg: #090c10;                        /* pre 블록 배경 (더 진한 다크) */
+  --code-border: #21262d;                    /* pre 블록 테두리 */
+  --code-shadow: rgba(0, 0, 0, 0.6);         /* pre 블록 그림자 */
+  --code-text: #cdd9e5;                      /* pre code 기본 글자색 */
+  --code-comment: #768390;                   /* 주석 글자색 */
+  --code-inline-bg: rgba(96, 165, 250, 0.1); /* 인라인 코드 배경 */
+  --code-highlight: #38bdf8;                 /* strong/b 강조 글자색 (Sky Blue) */
+  --code-highlight-glow: rgba(56, 189, 248, 0.35); /* 강조 글자 glow */
+  --code-number-highlight: #fb923c;          /* 코드 주석 넘버링 강조 글자색 (오렌지) */
+
+  /* ── 뷰어 레이아웃 & 컴포넌트 토큰 ── */
+  --sidebar-bg: #161924;                     /* 사이드바 및 TOC 배경색 */
+  --heading-color: #F1F5F9;                  /* 제목 텍스트 색상 */
+  --error-color: #F87171;                    /* 에러 메시지 색상 */
+  --caption-bg: #1A1D27;                     /* 이미지 캡션 배경색 */
+  --tooltip-bg: rgba(226, 232, 240, 0.9);    /* 돋보기 툴팁 배경색 */
+  --tooltip-border: rgba(45, 55, 72, 0.5);   /* 돋보기 툴팁 테두리 */
+  --tooltip-text: #0F1117;                   /* 돋보기 툴팁 텍스트 */
 }
 
-/* ── Reset & Base Styles ── */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
+/* ── body 배경 그라디언트 오버라이드 ── */
 body {
-  background-color: var(--bg-dark);
-  background-image: radial-gradient(circle at 50% 0%, var(--primary-glow) 0%, transparent 60%);
-  color: var(--text-main);
-  font-family: var(--font-sans);
-  line-height: 1.8;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-light);
+  background-image: radial-gradient(circle at 50% 0%, rgba(96, 165, 250, 0.04) 0%, transparent 60%);
 }
 
-/* ── 레이아웃 컨테이너 ── */
-.container {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 40px 20px;
-}
-
-/* ── 글래스모피즘 공통 카드 (.card-wrapper) ── */
-.card-wrapper {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-radius: 20px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  padding: 30px;
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
+/* ── 카드 호버 시 다크 테마용 글로우 ── */
 .card-wrapper:hover {
-  transform: translateY(-4px);
-  border-color: rgba(168, 85, 247, 0.3);
-  box-shadow: 0 15px 30px -10px rgba(168, 85, 247, 0.25);
+  border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 15%, transparent),
+              var(--shadow-lg);
 }
 
-/* ── 헤더 및 텍스트 위계 (Typography) ── */
-h1, h2, h3, h4 {
-  color: #FFF;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+/* ── 마크다운 이미지 다크 테마 그림자 ── */
+.markdown-body img {
+  border-color: var(--card-border);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
-h1 {
-  font-size: 2.5rem;
-  line-height: 1.2;
-  margin-bottom: 20px;
-  background: linear-gradient(135deg, #FFF 30%, var(--secondary) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+.markdown-body img:hover {
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.6);
 }
 
-h2 {
-  font-size: 1.6rem;
-  border-left: 4px solid var(--primary);
-  padding-left: 12px;
-  margin: 40px 0 20px 0;
+/* ── 테이블 헤더 다크 오버라이드 ── */
+th {
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--primary) 25%, transparent);
 }
 
-h3 {
-  font-size: 1.2rem;
-  margin: 24px 0 12px 0;
-  color: var(--text-main);
+/* ── 스크롤바 다크 스타일 (Webkit) ── */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-p {
-  color: var(--text-muted);
-  font-weight: 300;
-  margin-bottom: 16px;
+::-webkit-scrollbar-track {
+  background: var(--bg-light);
 }
 
-strong {
-  color: var(--primary);
-  font-weight: 600;
-}
-
-/* ── 네이티브 코드 블록 및 인라인 코드 ── */
-pre {
-  background: #111827;
-  border: 1px solid var(--card-border);
-  border-radius: 12px;
-  padding: 20px;
-  margin: 20px 0;
-  overflow-x: auto;
-}
-
-code {
-  font-family: var(--font-mono);
-  font-size: 0.85rem;
-}
-
-p code {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--primary);
-  padding: 2px 6px;
+::-webkit-scrollbar-thumb {
+  background: var(--card-border);
   border-radius: 4px;
 }
 
-/* ── 리스트 스타일 ── */
-ul, ol {
-  margin-bottom: 20px;
-  padding-left: 20px;
-  color: var(--text-muted);
-  font-weight: 300;
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--primary) 50%, var(--card-border));
 }
 
-li {
-  margin-bottom: 8px;
-}
-
-/* ── 테이블 스타일 ── */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 24px 0;
-  font-size: 0.9rem;
-}
-
-th {
-  background: rgba(168, 85, 247, 0.08);
-  color: var(--primary);
-  text-align: left;
-  padding: 12px 16px;
-  border-bottom: 2px solid rgba(168, 85, 247, 0.2);
-  font-weight: 600;
-}
-
-td {
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--card-border);
-  color: var(--text-muted);
+/* ── 선택 텍스트 다크 테마 ── */
+::selection {
+  background: color-mix(in srgb, var(--primary) 30%, transparent);
+  color: var(--text-main);
 }
