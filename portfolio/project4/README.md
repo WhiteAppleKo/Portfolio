@@ -1,8 +1,7 @@
 # Vampire Survivor Like
 ### Unity Shapes 에셋 및 3축 Cube Hex-Grid 기반 3D 서바이벌 로그라이크 프로젝트
 
-<!-- link-github: https://github.com/WhiteAppleKo/3D-Vampire-Survivor-Like -->
-<!-- link-video: https://youtube.com/watch?v=SomeVampireVideoUrl -->
+<!-- link-github: https://github.com/WhiteAppleKo/3DVampireSurvivorLike -->
 
 <div class="meta-grid">
   <div class="meta-item">
