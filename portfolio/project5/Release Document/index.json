@@ -1,0 +1,6 @@
+{
+  "files": [
+    { "title": "기획 및 시스템 설계 백서", "filename": "GDD.md" },
+    { "title": "클라이언트 핵심 기술 구현 백서", "filename": "DEV.md" }
+  ]
+}

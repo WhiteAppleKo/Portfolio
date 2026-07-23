@@ -933,6 +933,10 @@
           <span class="nav-num">PROJECT #04</span>
           <span class="nav-title">[프로젝트 4]</span>
         </a>
+        <a href="#5" class="nav-item" id="nav-link-5">
+          <span class="nav-num">PROJECT #05</span>
+          <span class="nav-title">[프로젝트 5]</span>
+        </a>
       </nav>
     </aside>
 
@@ -984,12 +988,17 @@
     const navListEl = document.getElementById('sidebar-nav-list');
 
     // 해시값 파싱 및 검증 함수
+    function parseHash() {
+      const hash = window.location.hash;
+      const match = hash.match(/^#(\d+)(?:\/(.+))?$/);
+      return {
+        projectNum: match ? parseInt(match[1], 10) : null,
+        subFile: match ? match[2] : null
+      };
+    }
+
     function getProjectNum() {
-      const hash = window.location.hash; // 예: "#1"
-      const num = hash ? parseInt(hash.substring(1), 10) : null;
-      
-      console.log("Parsed project hash parameter:", hash, "->", num);
-      return num;
+      return parseHash().projectNum;
     }
 
     // 좌측 사이드바 active 상태 비주얼 동기화
@@ -1008,43 +1017,262 @@
       contentEl.style.display = 'none';
     }
 
-    async function loadMarkdown(num) {
-      const filePath = `./portfolio/project${num}/README.md?t=${new Date().getTime()}`;
+    async function loadMarkdown(num, subFile) {
+      statusEl.innerHTML = `<span class="loading-message">인덱스 정보를 가져오는 중...</span>`;
+      statusEl.style.display = 'block';
+      contentEl.style.display = 'none';
 
       try {
-        const response = await fetch(filePath);
-        if (!response.ok) {
-          throw new Error("파일이 존재하지 않거나 읽을 수 없습니다.");
+        const indexUrl = `./portfolio/project${num}/Release Document/index.json?t=${new Date().getTime()}`;
+        const indexResponse = await fetch(indexUrl);
+        if (!indexResponse.ok) {
+          throw new Error("프로젝트 인덱스 파일(index.json)을 로드할 수 없습니다.");
+        }
+        const indexData = await indexResponse.json();
+        const files = indexData.files || [];
+
+        if (files.length === 0) {
+          throw new Error("인덱스에 등록된 문서가 없습니다.");
         }
 
-        const mdText = await response.text();
-        
-        // 동적 툴바 링크 파싱 및 바인딩
-        const githubMatch = mdText.match(/<!--\s*link-github:\s*(.*?)\s*-->/);
-        const videoMatch = mdText.match(/<!--\s*link-video:\s*(.*?)\s*-->/);
-
-        const btnGithub = document.getElementById('btn-github-link');
-        const btnVideo = document.getElementById('btn-video-link');
-
-        if (githubMatch && githubMatch[1] && githubMatch[1].trim() !== "#" && githubMatch[1].trim().length > 0) {
-          btnGithub.href = githubMatch[1].trim();
-          btnGithub.style.display = 'inline-flex';
+        if (files.length === 1) {
+          const filename = files[0].filename;
+          await fetchAndRenderMarkdown(num, filename, false);
         } else {
-          btnGithub.style.display = 'none';
+          if (subFile) {
+            await fetchAndRenderMarkdown(num, subFile, true);
+          } else {
+            renderDocListUI(num, files);
+          }
         }
-
-        if (videoMatch && videoMatch[1] && videoMatch[1].trim() !== "#" && videoMatch[1].trim().length > 0) {
-          btnVideo.href = videoMatch[1].trim();
-          btnVideo.style.display = 'inline-flex';
-        } else {
-          btnVideo.style.display = 'none';
-        }
-
-        renderMarkdown(mdText);
-
       } catch (err) {
         showError(`문서 로드 실패: ${err.message}<br><br><small>로컬에서 더블클릭 실행 시 브라우저 CORS 정책으로 인해 차단될 수 있습니다. 로컬 웹 서버를 구동해주세요.</small>`);
       }
+    }
+
+    async function fetchAndRenderMarkdown(num, filename, showBackBtn) {
+      const titlePath = `./portfolio/project${num}/Release Document/Title.md?t=${new Date().getTime()}`;
+      const filePath = `./portfolio/project${num}/Release Document/${filename}?t=${new Date().getTime()}`;
+
+      // Title.md와 세부 문서를 병렬 로드
+      const [titleRes, fileRes] = await Promise.all([
+        fetch(titlePath),
+        fetch(filePath)
+      ]);
+
+      if (!titleRes.ok) {
+        throw new Error("공통 타이틀 파일(Title.md)을 가져올 수 없습니다.");
+      }
+      if (!fileRes.ok) {
+        throw new Error(`문서 파일(${filename})을 가져올 수 없습니다.`);
+      }
+
+      const [titleText, docText] = await Promise.all([
+        titleRes.text(),
+        fileRes.text()
+      ]);
+
+      // 방법 A: 공통 타이틀 헤더와 세부 백서를 동적으로 병합
+      const mergedText = `${titleText}\n\n---\n\n${docText}`;
+
+      const githubMatch = mergedText.match(/<!--\s*link-github:\s*(.*?)\s*-->/);
+      const videoMatch = mergedText.match(/<!--\s*link-video:\s*(.*?)\s*-->/);
+
+      const btnGithub = document.getElementById('btn-github-link');
+      const btnVideo = document.getElementById('btn-video-link');
+
+      if (githubMatch && githubMatch[1] && githubMatch[1].trim() !== "#" && githubMatch[1].trim().length > 0) {
+        btnGithub.href = githubMatch[1].trim();
+        btnGithub.style.display = 'inline-flex';
+      } else {
+        btnGithub.style.display = 'none';
+      }
+
+      if (videoMatch && videoMatch[1] && videoMatch[1].trim() !== "#" && videoMatch[1].trim().length > 0) {
+        btnVideo.href = videoMatch[1].trim();
+        btnVideo.style.display = 'inline-flex';
+      } else {
+        btnVideo.style.display = 'none';
+      }
+
+      renderMarkdown(mergedText);
+
+      if (showBackBtn) {
+        const backHtml = `
+          <div class="doc-back-container" style="margin-bottom: 24px;">
+            <a href="#${num}" class="doc-back-btn" style="
+              display: inline-flex;
+              align-items: center;
+              padding: 8px 16px;
+              background: var(--card-bg);
+              border: 1px solid var(--card-border);
+              border-radius: 8px;
+              color: var(--text-main);
+              text-decoration: none;
+              font-size: 0.9rem;
+              font-weight: 600;
+              transition: all 0.2s ease;
+            ">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
+              전체 문서 목록으로 돌아가기
+            </a>
+          </div>
+        `;
+        contentEl.insertAdjacentHTML('afterbegin', backHtml);
+      }
+      
+      document.getElementById('toc-sidebar').style.display = 'block';
+    }
+
+    function renderDocListUI(num, files) {
+      document.getElementById('btn-github-link').style.display = 'none';
+      document.getElementById('btn-video-link').style.display = 'none';
+      document.getElementById('toc-sidebar').style.display = 'none';
+
+      let html = `
+        <div class="doc-list-view" style="
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 40px 0;
+          animation: fadeInUp 0.5s ease-out;
+        ">
+          <div class="doc-list-header" style="
+            margin-bottom: 40px;
+            text-align: center;
+          ">
+            <h2 style="
+              font-size: 2.2rem;
+              font-weight: 800;
+              letter-spacing: -0.02em;
+              margin-bottom: 12px;
+              background: linear-gradient(135deg, var(--heading-color) 30%, var(--primary) 100%);
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+            ">Release Documents</h2>
+            <p style="
+              font-size: 1.1rem;
+              color: var(--text-muted);
+              font-weight: 300;
+            ">본 프로젝트는 다중 상세 백서 문서를 지원합니다. 읽으실 문서를 선택하세요.</p>
+          </div>
+          
+          <div class="doc-list-grid" style="
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+          ">
+      `;
+
+      files.forEach(file => {
+        html += `
+          <a href="#${num}/${file.filename}" class="doc-list-card" style="
+            display: flex;
+            flex-direction: column;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 32px 24px;
+            text-decoration: none;
+            color: var(--text-main);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.04), 0 2px 4px -1px rgba(0,0,0,0.02);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+          ">
+            <div class="doc-card-icon-wrapper" style="
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              width: 44px;
+              height: 44px;
+              border-radius: 10px;
+              background: color-mix(in srgb, var(--primary) 8%, transparent);
+              color: var(--primary);
+              margin-bottom: 20px;
+              transition: all 0.3s ease;
+            ">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+              </svg>
+            </div>
+            
+            <h3 style="
+              font-size: 1.25rem;
+              font-weight: 700;
+              margin-bottom: 8px;
+              line-height: 1.4;
+            ">${file.title}</h3>
+            
+            <p style="
+              font-size: 0.9rem;
+              color: var(--text-muted);
+              margin-bottom: 24px;
+              flex: 1;
+            ">파일명: ${file.filename}</p>
+            
+            <div class="doc-card-btn-action" style="
+              display: inline-flex;
+              align-items: center;
+              font-size: 0.9rem;
+              font-weight: 600;
+              color: var(--primary);
+              transition: color 0.3s;
+            ">
+              문서 전문 읽기
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-left: 6px; transition: transform 0.3s;">
+                <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+          </a>
+        `;
+      });
+
+      html += `
+          </div>
+        </div>
+        <style>
+          .doc-list-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            opacity: 0;
+            transition: opacity 0.3s;
+          }
+          .doc-list-card:hover {
+            transform: translateY(-6px);
+            border-color: color-mix(in srgb, var(--primary) 30%, transparent);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+          }
+          .doc-list-card:hover::before {
+            opacity: 1;
+          }
+          .doc-list-card:hover .doc-card-icon-wrapper {
+            background: var(--primary);
+            color: #FFF;
+          }
+          .doc-list-card:hover .doc-card-btn-action {
+            color: var(--secondary);
+          }
+          .doc-list-card:hover .doc-card-btn-action svg {
+            transform: translateX(4px);
+          }
+        </style>
+      `;
+
+      contentEl.innerHTML = html;
+      statusEl.style.display = 'none';
+      contentEl.style.display = 'block';
     }
 
     function renderMarkdown(text) {
@@ -1803,7 +2031,7 @@
 
     // 각 프로젝트 마크다운에서 제목을 파싱하여 좌측 목차 명칭 동기화
     async function syncSidebarTitles() {
-      const projects = [1, 2, 3, 4];
+      const projects = [1, 2, 3, 4, 5];
       
       projects.forEach(num => {
         const navItem = document.getElementById(`nav-link-${num}`);
@@ -1811,16 +2039,15 @@
         
         const titleEl = navItem.querySelector('.nav-title');
 
-        fetch(`./portfolio/project${num}/README.md`)
+        fetch(`./portfolio/project${num}/Release Document/Title.md`)
           .then(res => {
-            if (!res.ok) throw new Error("Readme not found");
+            if (!res.ok) throw new Error("Title.md not found");
             return res.text();
           })
           .then(mdText => {
             const lines = mdText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
             for (let line of lines) {
               if (line.startsWith("#")) {
-                // 헤더 기호 제거 및 메타 구분 기호(—, -) 앞부분만 추출하여 간결화
                 let parsedTitle = line.replace(/^#+\s*/, "").split(/[—|-]/)[0].trim();
                 if (parsedTitle && titleEl) {
                   titleEl.textContent = parsedTitle;
@@ -1837,14 +2064,14 @@
 
     // 라우팅 실행부
     function route() {
-      const projectNum = getProjectNum();
+      const { projectNum, subFile } = parseHash();
 
-      if (!projectNum || isNaN(projectNum) || projectNum < 1 || projectNum > 4) {
+      if (!projectNum || isNaN(projectNum) || projectNum < 1 || projectNum > 5) {
         showError("올바르지 않은 프로젝트 경로입니다.");
         updateActiveSidebar(null);
       } else {
         updateActiveSidebar(projectNum);
-        loadMarkdown(projectNum);
+        loadMarkdown(projectNum, subFile);
       }
       // 문서 로딩 시 최상단 스크롤 초기화
       window.scrollTo(0, 0);

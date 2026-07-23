@@ -475,6 +475,23 @@
           </svg>
         </div>
       </a>
+
+      <!-- 5번 포트폴리오 -->
+      <a href="viewer.html#5" class="portfolio-card" id="card-proj-5">
+        <div class="card-num">PROJECT #05</div>
+        <h3 class="card-title">Echoes of Bond</h3>
+        <p class="card-desc">1인 조종 + 3인 자동 리액션 기반 턴제 전술 로그라이크 개발 프로젝트 기획 및 개발 백서 아카이브입니다.</p>
+        <div class="card-tags">
+          <span class="card-tag">기획 및 시스템 설계</span>
+          <span class="card-tag">클라이언트 기술 구현</span>
+        </div>
+        <div class="card-link-btn">
+          상세 문서 목록 보기
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </a>
     </div>
   </main>
 
@@ -548,7 +565,7 @@
 
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      const projects = [1, 2, 3, 4];
+      const projects = [1, 2, 3, 4, 5];
       
       projects.forEach(num => {
         const card = document.getElementById(`card-proj-${num}`);
@@ -558,10 +575,10 @@
         const descEl = card.querySelector(".card-desc");
         const tagsEl = card.querySelector(".card-tags");
 
-        // 프로젝트 마크다운 동적 읽기
-        fetch(`./portfolio/project${num}/README.md?t=${new Date().getTime()}`)
+        // 프로젝트 공통 메타 정보(Title.md) 동적 읽기
+        fetch(`./portfolio/project${num}/Release Document/Title.md?t=${new Date().getTime()}`)
           .then(res => {
-            if (!res.ok) throw new Error("Readme not found");
+            if (!res.ok) throw new Error("Title.md not found");
             return res.text();
           })
           .then(mdText => {

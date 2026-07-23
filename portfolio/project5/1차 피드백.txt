@@ -1,0 +1,14 @@
+1. 프로젝트 역할 및 기여 부분
+
+1-1. 캐릭터의 상태에 맞는 선택지를 제시한다는 내용이 포함되어야함
+1-2. BattleManager에서 순차적으로 연산을 수행하는게 아니라 진입과 완결이 보장된 PipeLine이라는 것이 중요함 
+
+2. Git Commit Log 기반 본인 개발 궤적 (Fact)
+
+2-1. `JournalSystem.cs` / `JournalModel.cs`, `JournalUIView.cs`, `BattleEventProvider.cs` 나눠 놓을 필요가 없음
+2-2. 씨발 애미없는 새끼야 전투 시스템(BattleFlow, BattleManager....etc) 어디가고 BattlePipeLine밖에없음?
+
+3. 주제별 상세
+전반적인 챕터 피드백 : 기술적인 내용 밖에없음, .UX관점에서 유저에게 어떤 기능을 제공하는 시스템을 만들었다는 내용이 부족함 시스템적으로도 시스템 내부에서 어떤 기능을 한다는 내용이 없음
+
+3.1 기획 문서의 정량적인 양을 표시해야함 하나하나 어떤걸 기획했다고 설명할 수가 없으니까
