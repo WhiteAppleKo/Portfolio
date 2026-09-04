@@ -1,5 +1,5 @@
 # Echoes of Bond
-### 1인 조종 + 3인 자동 리액션 기반 턴제 전술 로그라이크 개발 프로젝트
+### 1인 조종 + 3인 자동 리액션 기반 턴제 전술 게임 개발 프로젝트
 
 <!-- link-github: https://github.com/WhiteAppleKo/Bond -->
 

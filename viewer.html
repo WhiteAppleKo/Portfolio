@@ -1037,10 +1037,10 @@
 
         if (files.length === 1) {
           const filename = files[0].filename;
-          await fetchAndRenderMarkdown(num, filename, false);
+          await fetchAndRenderMarkdown(num, filename, false, indexData);
         } else {
           if (subFile) {
-            await fetchAndRenderMarkdown(num, subFile, true);
+            await fetchAndRenderMarkdown(num, subFile, true, indexData);
           } else {
             renderDocListUI(num, files);
           }
@@ -1050,7 +1050,7 @@
       }
     }
 
-    async function fetchAndRenderMarkdown(num, filename, showBackBtn) {
+    async function fetchAndRenderMarkdown(num, filename, showBackBtn, indexData) {
       const titlePath = `./portfolio/project${num}/Release Document/Title.md?t=${new Date().getTime()}`;
       const filePath = `./portfolio/project${num}/Release Document/${filename}?t=${new Date().getTime()}`;
 
@@ -1072,8 +1072,18 @@
         fileRes.text()
       ]);
 
+      // index.json에 명세된 타이틀 명칭을 획득하여 프로젝트 메인 제목 H1 뒤에 합성 주입 (문서가 2개 이상일 때만 결합)
+      const files = indexData && indexData.files ? indexData.files : [];
+      const fileMeta = files.length > 1 ? files.find(f => f.filename === filename) : null;
+      const suffix = fileMeta ? ` (${fileMeta.title})` : "";
+      
+      let parsedTitleText = titleText;
+      if (suffix) {
+        parsedTitleText = titleText.replace(/^(#\s+.*)$/m, `$1${suffix}`);
+      }
+
       // 방법 A: 공통 타이틀 헤더와 세부 백서를 동적으로 병합
-      const mergedText = `${titleText}\n\n---\n\n${docText}`;
+      const mergedText = `${parsedTitleText}\n\n---\n\n${docText}`;
 
       const githubMatch = mergedText.match(/<!--\s*link-github:\s*(.*?)\s*-->/);
       const videoMatch = mergedText.match(/<!--\s*link-video:\s*(.*?)\s*-->/);
@@ -1940,7 +1950,25 @@
       
       tocListEl.innerHTML = ''; // 초기화
       
-      const headers = contentEl.querySelectorAll('h2, h3');
+      // 최상단 H1 프로젝트 제목 추출
+      const h1El = contentEl.querySelector('h1');
+      
+      // 본문 상세 백서의 H2, H3 추출 (첫 번째 H2 이후만)
+      const rawSubHeaders = Array.from(contentEl.querySelectorAll('h2, h3'));
+      let firstH2Found = false;
+      const subHeaders = rawSubHeaders.filter(header => {
+        if (header.tagName === 'H2') {
+          firstH2Found = true;
+        }
+        return firstH2Found;
+      });
+
+      const headers = [];
+      if (h1El) {
+        headers.push(h1El);
+      }
+      headers.push(...subHeaders);
+
       if (headers.length === 0) {
         tocSidebarEl.style.display = 'none';
         return;
@@ -1986,12 +2014,21 @@
         link.href = `#${headerId}`;
         link.className = 'toc-link';
         link.dataset.target = headerId;
-        link.textContent = header.textContent.replace('▹', '').trim();
         
-        if (header.tagName === 'H2') {
+        let text = header.textContent.replace('▹', '').trim();
+        // H1의 경우 강제로 "0. " 접두사 결합하여 대단원 스타일 적용
+        if (header.tagName === 'H1') {
           link.classList.add('depth-h2');
+          text = `0. ${text}`;
+        }
+        link.textContent = text;
+        
+        if (header.tagName === 'H1' || header.tagName === 'H2') {
+          if (header.tagName === 'H2') {
+            link.classList.add('depth-h2');
+          }
           
-          // H2가 생성되면 그 아래 H3 자식들을 모아둘 서브그룹 컨테이너 신설
+          // H1/H2가 생성되면 그 아래 자식들을 모아둘 서브그룹 컨테이너 신설
           currentSubGroup = document.createElement('div');
           currentSubGroup.className = 'toc-sub-group';
         } else if (header.tagName === 'H3') {
@@ -2011,7 +2048,7 @@
         });
 
         // H2는 목차 최상위에 직접 박고 직후 서브그룹 컨테이너를 함께 배치
-        if (header.tagName === 'H2') {
+        if (header.tagName === 'H1' || header.tagName === 'H2') {
           tocListEl.appendChild(link);
           if (currentSubGroup) {
             tocListEl.appendChild(currentSubGroup);
