@@ -623,7 +623,12 @@
         </div>
         <div class="info-item">
           <div class="info-label">Education</div>
-          <div class="info-val">한라대학교 컴퓨터공학과</div>
+          <div class="info-val">한라대학교 컴퓨터공학과 (2017.02 - 2024.02)</div>
+          <div class="info-val" style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal; margin-top: 3px;">동화고등학교 (2014.02 - 2017.02)</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Training</div>
+          <div class="info-val">경일 게임 IT 아카데미 (2025.01 - 2025.08)</div>
         </div>
         <div class="info-item">
           <div class="info-label">Core Stacks</div>
@@ -704,6 +709,18 @@
           <div id="target-intro"></div>
         </section>
 
+        <!-- 학력 사항 -->
+        <section style="margin-bottom: 60px;">
+          <h2 class="section-title">Education</h2>
+          <div class="history-list" id="target-education"></div>
+        </section>
+
+        <!-- 비정규 교육 -->
+        <section style="margin-bottom: 60px;">
+          <h2 class="section-title">Training</h2>
+          <div class="history-list" id="target-training"></div>
+        </section>
+
         <!-- 경력 사항 -->
         <section style="margin-bottom: 60px;">
           <h2 class="section-title">Experience</h2>
@@ -734,6 +751,62 @@
         }
       }
       document.getElementById('target-intro').innerHTML = introHtml;
+
+      // 학력 바인딩
+      const targetEdu = document.getElementById('target-education');
+      let eduStarted = false;
+      for (let el of children) {
+        if (el.tagName === 'H2' && el.textContent.includes('학력 사항')) {
+          eduStarted = true;
+          continue;
+        }
+        if (eduStarted) {
+          if (el.tagName === 'H2') break;
+          if (el.tagName === 'UL') {
+            targetEdu.innerHTML = Array.from(el.children).map(li => {
+              const strong = li.querySelector('strong');
+              const period = strong ? strong.textContent.trim() : '';
+              let rest = li.textContent.replace(period, '').replace(/^[:\s]+/, '').trim();
+              return `
+                <div class="history-card">
+                  <div class="history-meta">
+                    <span class="history-period">${period}</span>
+                  </div>
+                  <div class="history-name">${rest}</div>
+                </div>
+              `;
+            }).join('');
+          }
+        }
+      }
+
+      // 비정규 교육 바인딩
+      const targetTraining = document.getElementById('target-training');
+      let trainingStarted = false;
+      for (let el of children) {
+        if (el.tagName === 'H2' && el.textContent.includes('비정규 교육')) {
+          trainingStarted = true;
+          continue;
+        }
+        if (trainingStarted) {
+          if (el.tagName === 'H2') break;
+          if (el.tagName === 'UL') {
+            targetTraining.innerHTML = Array.from(el.children).map(li => {
+              const strong = li.querySelector('strong');
+              const period = strong ? strong.textContent.trim() : '';
+              let rest = li.textContent.replace(period, '').replace(/^[:\s]+/, '').trim();
+              return `
+                <div class="history-card">
+                  <div class="history-meta">
+                    <span class="history-period">${period}</span>
+                  </div>
+                  <div class="history-name">${rest}</div>
+                </div>
+              `;
+            }).join('');
+          }
+        }
+      }
 
       // 경력 바인딩
       const targetExp = document.getElementById('target-experience');
