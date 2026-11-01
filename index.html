@@ -152,6 +152,16 @@
       gap: 24px;
     }
 
+    /* ── DevKit 섹션 ── */
+    .devkit-title {
+      margin-top: 64px;
+    }
+
+    .devkit-desc {
+      color: var(--text-muted);
+      margin: -12px 0 24px 14px;
+    }
+
     /* ── 포트폴리오 카드 컴포넌트 ── */
     .portfolio-card {
       background: var(--card-bg);
@@ -487,6 +497,47 @@
         </div>
         <div class="card-link-btn">
           상세 문서 목록 보기
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </a>
+    </div>
+
+    <h2 class="grid-title devkit-title" id="devkit-header">DevKit</h2>
+    <p class="devkit-desc">여러 프로젝트에서 반복해 쓰는 코드를 CodeLibrary에서 범용 모듈로 정리했습니다.</p>
+
+    <div class="portfolio-grid" id="devkit-list-grid">
+      <!-- DevKit: Data -->
+      <a href="viewer.html#devkit/Data.md" class="portfolio-card" id="card-devkit-data">
+        <div class="card-num">DEVKIT · DATA</div>
+        <h3 class="card-title">Pure / Runtime Data</h3>
+        <p class="card-desc">ScriptableObject 원본과 런타임 값을 타입 수준에서 분리하고, 범위를 스스로 보장하는 ClampedValue로 스탯을 관리하는 제네릭 데이터 구조입니다.</p>
+        <div class="card-tags">
+          <span class="card-tag">C# Generics</span>
+          <span class="card-tag">ScriptableObject</span>
+          <span class="card-tag">Immutable Struct</span>
+        </div>
+        <div class="card-link-btn">
+          코드 문서 보기
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </a>
+
+      <!-- DevKit: PipeLine -->
+      <a href="viewer.html#devkit/PipeLine.md" class="portfolio-card" id="card-devkit-pipeline">
+        <div class="card-num">DEVKIT · PIPELINE</div>
+        <h3 class="card-title">Step PipeLine</h3>
+        <p class="card-desc">데미지 계산 같은 연산을 독립된 단계로 쪼개고, 단계의 구성과 순서를 에셋 인스펙터에서 편집하는 UniTask 기반 비동기 파이프라인입니다.</p>
+        <div class="card-tags">
+          <span class="card-tag">SerializeReference</span>
+          <span class="card-tag">UniTask</span>
+          <span class="card-tag">Custom Editor</span>
+        </div>
+        <div class="card-link-btn">
+          코드 문서 보기
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>

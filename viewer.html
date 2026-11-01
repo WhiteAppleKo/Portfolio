@@ -937,6 +937,10 @@
           <span class="nav-num">PROJECT #05</span>
           <span class="nav-title">[프로젝트 5]</span>
         </a>
+        <a href="#devkit" class="nav-item" id="nav-link-devkit">
+          <span class="nav-num">DEVKIT</span>
+          <span class="nav-title">DevKit</span>
+        </a>
       </nav>
     </aside>
 
@@ -987,12 +991,20 @@
     const contentEl = document.getElementById('markdown-content');
     const navListEl = document.getElementById('sidebar-nav-list');
 
+    // 문서 키: 프로젝트 번호("1"~"5") 또는 "devkit"
+    const DOC_KEYS = ['1', '2', '3', '4', '5', 'devkit'];
+
+    // 문서 키별 Release Document 폴더 경로
+    function docBase(key) {
+      return key === 'devkit' ? './portfolio/devkit/Release Document' : `./portfolio/project${key}/Release Document`;
+    }
+
     // 해시값 파싱 및 검증 함수
     function parseHash() {
       const hash = window.location.hash;
-      const match = hash.match(/^#(\d+)(?:\/(.+))?$/);
+      const match = hash.match(/^#(\d+|devkit)(?:\/(.+))?$/);
       return {
-        projectNum: match ? parseInt(match[1], 10) : null,
+        projectNum: match ? match[1] : null,
         subFile: match ? match[2] : null
       };
     }
@@ -1005,9 +1017,8 @@
     function updateActiveSidebar(num) {
       const navItems = navListEl.querySelectorAll('.nav-item');
       navItems.forEach(item => {
-        const itemHash = item.getAttribute('href'); // "#1", "#2" 등
-        const itemNum = parseInt(itemHash.substring(1), 10);
-        item.classList.toggle('active', itemNum === num);
+        const itemHash = item.getAttribute('href'); // "#1", "#devkit" 등
+        item.classList.toggle('active', itemHash.substring(1) === num);
       });
     }
 
@@ -1023,7 +1034,7 @@
       contentEl.style.display = 'none';
 
       try {
-        const indexUrl = `./portfolio/project${num}/Release Document/index.json?t=${new Date().getTime()}`;
+        const indexUrl = `${docBase(num)}/index.json?t=${new Date().getTime()}`;
         const indexResponse = await fetch(indexUrl);
         if (!indexResponse.ok) {
           throw new Error("프로젝트 인덱스 파일(index.json)을 로드할 수 없습니다.");
@@ -1051,8 +1062,8 @@
     }
 
     async function fetchAndRenderMarkdown(num, filename, showBackBtn, indexData) {
-      const titlePath = `./portfolio/project${num}/Release Document/Title.md?t=${new Date().getTime()}`;
-      const filePath = `./portfolio/project${num}/Release Document/${filename}?t=${new Date().getTime()}`;
+      const titlePath = `${docBase(num)}/Title.md?t=${new Date().getTime()}`;
+      const filePath = `${docBase(num)}/${filename}?t=${new Date().getTime()}`;
 
       // Title.md와 세부 문서를 병렬 로드
       const [titleRes, fileRes] = await Promise.all([
@@ -2068,15 +2079,13 @@
 
     // 각 프로젝트 마크다운에서 제목을 파싱하여 좌측 목차 명칭 동기화
     async function syncSidebarTitles() {
-      const projects = [1, 2, 3, 4, 5];
-      
-      projects.forEach(num => {
+      DOC_KEYS.forEach(num => {
         const navItem = document.getElementById(`nav-link-${num}`);
         if (!navItem) return;
         
         const titleEl = navItem.querySelector('.nav-title');
 
-        fetch(`./portfolio/project${num}/Release Document/Title.md`)
+        fetch(`${docBase(num)}/Title.md`)
           .then(res => {
             if (!res.ok) throw new Error("Title.md not found");
             return res.text();
@@ -2103,7 +2112,7 @@
     function route() {
       const { projectNum, subFile } = parseHash();
 
-      if (!projectNum || isNaN(projectNum) || projectNum < 1 || projectNum > 5) {
+      if (!projectNum || !DOC_KEYS.includes(projectNum)) {
         showError("올바르지 않은 프로젝트 경로입니다.");
         updateActiveSidebar(null);
       } else {
